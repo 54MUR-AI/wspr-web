@@ -5,9 +5,7 @@ const helmet = require('helmet');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const routes = require('./routes');
-const { setupWebSocket } = require('./services/websocket');
-const { setupDatabase } = require('./config/database');
-const { errorHandler } = require('./middleware/errorHandler');
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 const httpServer = createServer(app);
@@ -32,18 +30,7 @@ app.use('/api', routes);
 // Error handling
 app.use(errorHandler);
 
-// Setup WebSocket
-setupWebSocket(io);
-
-// Initialize database
-setupDatabase()
-  .then(() => {
-    const PORT = process.env.PORT || 3001;
-    httpServer.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('Failed to initialize database:', err);
-    process.exit(1);
-  });
+const PORT = process.env.PORT || 3001;
+httpServer.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

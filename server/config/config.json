@@ -1,0 +1,14 @@
+{
+  "development": {
+    "dialect": "better-sqlite3",
+    "storage": "./database.sqlite"
+  },
+  "test": {
+    "dialect": "better-sqlite3",
+    "storage": ":memory:"
+  },
+  "production": {
+    "dialect": "better-sqlite3",
+    "storage": "./database.sqlite"
+  }
+}
