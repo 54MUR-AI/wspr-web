@@ -74,7 +74,7 @@ A secure, privacy-focused communication platform with real-time messaging, end-t
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/wspr-web.git
+git clone https://github.com/54MUR-AI/wspr-web.git
 cd wspr-web
 ```
 
