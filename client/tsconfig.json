@@ -28,5 +28,12 @@
     }
   },
   "include": ["src"],
+  "exclude": [
+    "src/tests",
+    "src/store",
+    "src/utils/crypto",
+    "src/utils/encryption.ts",
+    "node_modules"
+  ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
