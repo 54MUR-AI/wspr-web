@@ -27,7 +27,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
     <div className="w-64 bg-samurai-black-lighter border-r border-samurai-grey-dark flex flex-col">
       {/* Workspace Header */}
       <div className="p-4 border-b border-samurai-grey-dark">
-        <h2 className="text-xl font-bold neon-text mb-2">
+        <h2 className="text-xl font-bold text-white mb-2">
           {workspaceName === 'ronin-media' ? 'RONIN MEDIA' : 'Personal'}
         </h2>
         <div className="relative">

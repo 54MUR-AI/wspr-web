@@ -55,7 +55,7 @@ export default function MessageThread({ channelName, userEmail }: MessageThreadP
       {/* Channel Header */}
       <div className="h-16 border-b border-samurai-grey-dark px-6 flex items-center gap-3">
         <Hash className="w-5 h-5 text-samurai-red" />
-        <h3 className="text-lg font-bold">{channelName}</h3>
+        <h3 className="text-lg font-bold text-white">{channelName}</h3>
         <div className="flex-1" />
         {userEmail && (
           <div className="text-sm text-samurai-steel mr-4">
