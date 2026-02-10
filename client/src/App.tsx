@@ -4,6 +4,7 @@ import ChannelList from './components/layout/ChannelList'
 import MessageThread from './components/layout/MessageThread'
 import { authManager } from './utils/auth'
 import { socketService } from './services/socket'
+import { getOrCreateProfile, updateStatus } from './services/profile.service'
 import './index.css'
 
 // WSPR v2.0 - Samurai Redesign
@@ -16,17 +17,32 @@ function App() {
   const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
-    const user = authManager.getUser()
-    if (user) {
-      setIsAuthenticated(true)
-      setUserEmail(user.email)
-      setUserId(user.userId)
-      
-      // Connect to Socket.IO
-      socketService.connect(user.userId, user.email)
-      setIsConnected(true)
-      
-      return () => {
+    const initializeUser = async () => {
+      const user = authManager.getUser()
+      if (user) {
+        setIsAuthenticated(true)
+        setUserEmail(user.email)
+        setUserId(user.userId)
+        
+        // Initialize user profile in Supabase
+        await getOrCreateProfile(user.userId, user.email)
+        
+        // Set user status to online
+        await updateStatus(user.userId, 'online')
+        
+        // Connect to Socket.IO
+        socketService.connect(user.userId, user.email)
+        setIsConnected(true)
+      }
+    }
+
+    initializeUser()
+    
+    return () => {
+      const user = authManager.getUser()
+      if (user) {
+        // Set status to offline on unmount
+        updateStatus(user.userId, 'offline')
         socketService.disconnect()
       }
     }

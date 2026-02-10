@@ -16,6 +16,7 @@
     "@mui/x-date-pickers": "^6.18.4",
     "@reduxjs/toolkit": "^1.9.7",
     "@simplewebauthn/browser": "^7.4.0",
+    "@supabase/supabase-js": "^2.95.3",
     "axios": "^1.6.2",
     "date-fns": "^2.30.0",
     "hls.js": "^1.4.12",
@@ -44,6 +45,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.25.9",
+    "@tailwindcss/postcss": "^4.0.0",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -52,7 +54,6 @@
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react": "^4.3.4",
-    "@tailwindcss/postcss": "^4.0.0",
     "autoprefixer": "^10.4.24",
     "compression": "^1.7.5",
     "express": "^4.21.1",
