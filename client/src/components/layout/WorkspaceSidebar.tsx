@@ -1,15 +1,17 @@
 import { Settings, Plus } from 'lucide-react'
+import { WsprWorkspace } from '../../lib/supabase'
 
 interface WorkspaceSidebarProps {
   selectedWorkspace: string
   onWorkspaceChange: (workspace: string) => void
+  workspaces: WsprWorkspace[]
+  userId: string
 }
 
-export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange }: WorkspaceSidebarProps) {
-  const workspaces = [
-    { id: 'ronin-media', name: 'RM', color: 'samurai-red' },
-    { id: 'personal', name: 'P', color: 'samurai-steel' },
-  ]
+export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange, workspaces, userId }: WorkspaceSidebarProps) {
+  const getWorkspaceInitials = (name: string) => {
+    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  }
 
   return (
     <div className="w-20 bg-samurai-black-light border-r border-samurai-grey-dark flex flex-col items-center py-4 gap-3">
@@ -18,13 +20,14 @@ export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange 
         <button
           key={workspace.id}
           onClick={() => onWorkspaceChange(workspace.id)}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg transition-all duration-300 ${
+          title={workspace.name}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm transition-all duration-300 ${
             selectedWorkspace === workspace.id
               ? 'bg-samurai-red text-white shadow-lg shadow-samurai-red/50 animate-glow-pulse'
               : 'bg-samurai-grey-darker text-samurai-steel hover:bg-samurai-grey-dark hover:text-white'
           }`}
         >
-          {workspace.name}
+          {getWorkspaceInitials(workspace.name)}
         </button>
       ))}
 

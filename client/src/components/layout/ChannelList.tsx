@@ -1,34 +1,52 @@
-import { Hash, Users, Lock, Plus, ChevronDown, Search } from 'lucide-react'
-import { useState } from 'react'
+import { Hash, Users, Lock, Plus, ChevronDown, Search, UserPlus } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { getWorkspaceChannels } from '../../services/channel.service'
+import { getContacts } from '../../services/contact.service'
+import { WsprChannel } from '../../lib/supabase'
+import FindContactsModal from '../contacts/FindContactsModal'
 
 interface ChannelListProps {
   selectedChannel: string
   onChannelSelect: (channel: string) => void
-  workspaceName: string
+  workspaceId: string
+  userId: string
 }
 
-export default function ChannelList({ selectedChannel, onChannelSelect, workspaceName }: ChannelListProps) {
+export default function ChannelList({ selectedChannel, onChannelSelect, workspaceId, userId }: ChannelListProps) {
   const [channelsExpanded, setChannelsExpanded] = useState(true)
   const [dmsExpanded, setDmsExpanded] = useState(true)
+  const [channels, setChannels] = useState<WsprChannel[]>([])
+  const [contacts, setContacts] = useState<any[]>([])
+  const [showFindContacts, setShowFindContacts] = useState(false)
 
-  const channels = [
-    { id: 'general', name: 'general', isPrivate: false },
-    { id: 'random', name: 'random', isPrivate: false },
-    { id: 'dev-team', name: 'dev-team', isPrivate: true },
-  ]
+  useEffect(() => {
+    if (workspaceId) {
+      loadChannels()
+    }
+  }, [workspaceId])
 
-  const directMessages = [
-    { id: 'dm-alice', name: 'Alice', online: true },
-    { id: 'dm-bob', name: 'Bob', online: false },
-    { id: 'dm-charlie', name: 'Charlie', online: true },
-  ]
+  useEffect(() => {
+    if (userId) {
+      loadContacts()
+    }
+  }, [userId])
+
+  const loadChannels = async () => {
+    const channelData = await getWorkspaceChannels(workspaceId)
+    setChannels(channelData)
+  }
+
+  const loadContacts = async () => {
+    const contactData = await getContacts(userId)
+    setContacts(contactData)
+  }
 
   return (
     <div className="w-64 bg-samurai-black-lighter border-r border-samurai-grey-dark flex flex-col">
       {/* Workspace Header */}
       <div className="p-4 border-b border-samurai-grey-dark">
         <h2 className="text-xl font-bold text-white mb-2">
-          {workspaceName === 'ronin-media' ? 'RONIN MEDIA' : 'Personal'}
+          WSPR
         </h2>
         <div className="relative">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-samurai-steel" />
@@ -67,7 +85,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
                       : 'text-samurai-steel hover:bg-samurai-grey-darker hover:text-white'
                   }`}
                 >
-                  {channel.isPrivate ? <Lock className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
+                  {channel.is_private ? <Lock className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
                   <span>{channel.name}</span>
                 </button>
               ))}
@@ -85,34 +103,52 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
               <ChevronDown className={`w-4 h-4 transition-transform ${dmsExpanded ? '' : '-rotate-90'}`} />
               <span className="text-sm font-semibold">Direct Messages</span>
             </div>
-            <Plus className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <UserPlus 
+              className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" 
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowFindContacts(true)
+              }}
+            />
           </button>
 
           {dmsExpanded && (
             <div className="mt-1 space-y-0.5">
-              {directMessages.map((dm) => (
+              {contacts.map((contact) => (
                 <button
-                  key={dm.id}
-                  onClick={() => onChannelSelect(dm.id)}
+                  key={contact.id}
+                  onClick={() => onChannelSelect(`dm-${contact.contact_id}`)}
                   className={`w-full flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm transition-all ${
-                    selectedChannel === dm.id
+                    selectedChannel === `dm-${contact.contact_id}`
                       ? 'bg-samurai-red text-white font-semibold'
                       : 'text-samurai-steel hover:bg-samurai-grey-darker hover:text-white'
                   }`}
                 >
                   <div className="relative">
-                    <Users className="w-4 h-4" />
-                    {dm.online && (
+                    <div className="w-6 h-6 bg-samurai-red rounded-full flex items-center justify-center text-xs font-bold">
+                      {contact.profile.display_name.charAt(0).toUpperCase()}
+                    </div>
+                    {contact.profile.status === 'online' && (
                       <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border border-samurai-black-lighter" />
                     )}
                   </div>
-                  <span>{dm.name}</span>
+                  <span>{contact.profile.display_name}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Find Contacts Modal */}
+      <FindContactsModal 
+        isOpen={showFindContacts}
+        onClose={() => {
+          setShowFindContacts(false)
+          loadContacts() // Reload contacts after closing modal
+        }}
+        currentUserId={userId}
+      />
     </div>
   )
 }
