@@ -35,7 +35,7 @@ function App() {
   // Show auth required screen if not authenticated from RMG
   if (!isAuthenticated) {
     return (
-      <div className="flex h-screen bg-samurai-black text-white items-center justify-center p-4">
+      <div className="flex h-screen text-white items-center justify-center p-4" style={{ backgroundColor: '#FF1493' }}>
         <div className="glass-card p-12 rounded-xl max-w-md text-center">
           <div className="w-20 h-20 bg-samurai-red rounded-full mx-auto mb-6 flex items-center justify-center animate-glow-pulse">
             <span className="text-4xl">🔒</span>
