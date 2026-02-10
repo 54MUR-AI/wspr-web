@@ -25,7 +25,7 @@ services:
     name: wspr-web
     env: static
     buildCommand: cd client && npm install && npm run build
-    staticPublishPath: ./client/dist
+    staticPublishPath: ./client/build
     envVars:
       - key: VITE_API_URL
         value: https://wspr-backend.onrender.com
