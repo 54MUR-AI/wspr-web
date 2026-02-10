@@ -57,7 +57,7 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen bg-samurai-black text-white overflow-hidden">
+    <div className="flex h-screen text-white overflow-hidden" style={{ backgroundColor: '#FF1493' }}>
       {/* Left Sidebar - Workspace Switcher - Hidden on mobile */}
       <div className="hidden md:block">
         <WorkspaceSidebar 
