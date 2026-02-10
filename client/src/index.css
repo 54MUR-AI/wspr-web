@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Scrollbar Styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #E63946 #1A1A1A;
+}
+
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #1A1A1A;
+  border-radius: 10px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #E63946;
+  border-radius: 10px;
+  border: 2px solid #1A1A1A;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #FF4757;
+}
+
+*::-webkit-scrollbar-corner {
+  background: #1A1A1A;
+}
+
+@layer base {
+  body {
+    @apply bg-samurai-black min-h-screen text-white;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-samurai-grey-darker border-2 border-samurai-steel-dark/50 shadow-2xl;
+  }
+  
+  .search-input {
+    @apply w-full px-6 py-4 text-lg bg-samurai-black border-2 border-samurai-grey-dark 
+           text-white placeholder-white/50 rounded-xl 
+           focus:outline-none focus:border-samurai-red 
+           transition-all duration-300;
+  }
+  
+  .btn-primary {
+    @apply px-8 py-3 bg-gradient-to-r from-samurai-red to-samurai-red-dark 
+           text-white font-bold rounded-xl hover:from-samurai-red-dark 
+           hover:to-samurai-red-darker focus:outline-none focus:ring-4 
+           focus:ring-samurai-red/30 transition-all duration-300 
+           shadow-lg shadow-samurai-red/30 hover:shadow-xl hover:shadow-samurai-red/50 
+           transform hover:-translate-y-0.5 animate-glow-pulse;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-2 bg-samurai-black-lighter border-2 border-samurai-red text-samurai-red 
+           font-semibold rounded-xl hover:bg-samurai-red hover:text-white 
+           focus:outline-none focus:ring-4 focus:ring-samurai-red/20 
+           transition-all duration-300;
+  }
+  
+  .neon-text {
+    text-shadow: 0 0 10px rgba(230, 57, 70, 0.8),
+                 0 0 20px rgba(230, 57, 70, 0.6),
+                 0 0 30px rgba(230, 57, 70, 0.4);
+  }
+}
