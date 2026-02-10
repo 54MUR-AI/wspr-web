@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-globals */
 
 // Cache name for our app
-const CACHE_NAME = 'wspr-cache-v1';
+const CACHE_NAME = 'wspr-cache-v2';
 
 // Assets to cache
 const urlsToCache = [
@@ -20,6 +20,26 @@ self.addEventListener('install', (event) => {
         return cache.addAll(urlsToCache);
       })
   );
+  // Force the waiting service worker to become the active service worker
+  self.skipWaiting();
+});
+
+// Activate service worker and delete old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+  // Take control of all pages immediately
+  return self.clients.claim();
 });
 
 // Listen for push events
