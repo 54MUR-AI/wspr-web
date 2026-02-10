@@ -68,10 +68,50 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Socket.IO setup
+const io = new Server(httpServer, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true
+  }
+});
+
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+
+  socket.on('join-channel', (channelId: string) => {
+    socket.join(channelId);
+    console.log(`Socket ${socket.id} joined channel: ${channelId}`);
+  });
+
+  socket.on('leave-channel', (channelId: string) => {
+    socket.leave(channelId);
+    console.log(`Socket ${socket.id} left channel: ${channelId}`);
+  });
+
+  socket.on('send-message', (data: { channelId: string; content: string; author: string; userId: string }) => {
+    const message = {
+      id: Date.now().toString(),
+      channelId: data.channelId,
+      content: data.content,
+      author: data.author,
+      userId: data.userId,
+      timestamp: new Date().toISOString()
+    };
+    io.to(data.channelId).emit('new-message', message);
+    console.log(`Message sent to channel ${data.channelId}:`, message);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
 // Error handler
 app.use(errorHandler);
 
 // Start server
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log(`Server is running on port ${port}`);
+  console.log('Socket.IO server is ready');
 });
