@@ -12,27 +12,11 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": false,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "noEmit": false
   },
   "include": [
     "src/index.ts",
     "src/database.ts",
     "src/middleware/error.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "src/services/**/*",
-    "src/tests/**/*",
-    "src/utils/**/*",
-    "src/models/**/*",
-    "src/controllers/**/*",
-    "src/routes/**/*",
-    "src/middleware/auth.ts",
-    "src/middleware/validate-request.ts"
   ]
 }
