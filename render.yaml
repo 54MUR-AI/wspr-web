@@ -2,9 +2,10 @@ services:
   # WSPR Backend API
   - type: web
     name: wspr-backend
-    env: node
+    runtime: node
     region: oregon
     plan: free
+    branch: samurai-redesign
     buildCommand: cd server && npm install && npm run build
     startCommand: cd server && npm start
     envVars:
