@@ -1,6 +1,27 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Tailwind v4 CSS Variables */
+@theme {
+  --color-samurai-red: #E63946;
+  --color-samurai-red-dark: #C1121F;
+  --color-samurai-red-darker: #8B0000;
+  --color-samurai-steel: #6B7280;
+  --color-samurai-steel-light: #9CA3AF;
+  --color-samurai-steel-dark: #4B5563;
+  --color-samurai-black: #0A0A0A;
+  --color-samurai-black-light: #1A1A1A;
+  --color-samurai-black-lighter: #2A2A2A;
+  --color-samurai-grey: #374151;
+  --color-samurai-grey-dark: #1F2937;
+  --color-samurai-grey-darker: #111827;
+  
+  --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(230, 57, 70, 0.5); }
+  50% { box-shadow: 0 0 30px rgba(230, 57, 70, 0.8); }
+}
 
 /* Custom Scrollbar Styling */
 * {
@@ -32,43 +53,8 @@
   background: #1A1A1A;
 }
 
-@layer base {
-  body {
-    @apply bg-samurai-black min-h-screen text-white;
-  }
-}
-
-@layer components {
-  .glass-card {
-    @apply bg-samurai-grey-darker border-2 border-samurai-steel-dark/50 shadow-2xl;
-  }
-  
-  .search-input {
-    @apply w-full px-6 py-4 text-lg bg-samurai-black border-2 border-samurai-grey-dark 
-           text-white placeholder-white/50 rounded-xl 
-           focus:outline-none focus:border-samurai-red 
-           transition-all duration-300;
-  }
-  
-  .btn-primary {
-    @apply px-8 py-3 bg-gradient-to-r from-samurai-red to-samurai-red-dark 
-           text-white font-bold rounded-xl hover:from-samurai-red-dark 
-           hover:to-samurai-red-darker focus:outline-none focus:ring-4 
-           focus:ring-samurai-red/30 transition-all duration-300 
-           shadow-lg shadow-samurai-red/30 hover:shadow-xl hover:shadow-samurai-red/50 
-           transform hover:-translate-y-0.5 animate-glow-pulse;
-  }
-  
-  .btn-secondary {
-    @apply px-6 py-2 bg-samurai-black-lighter border-2 border-samurai-red text-samurai-red 
-           font-semibold rounded-xl hover:bg-samurai-red hover:text-white 
-           focus:outline-none focus:ring-4 focus:ring-samurai-red/20 
-           transition-all duration-300;
-  }
-  
-  .neon-text {
-    text-shadow: 0 0 10px rgba(230, 57, 70, 0.8),
-                 0 0 20px rgba(230, 57, 70, 0.6),
-                 0 0 30px rgba(230, 57, 70, 0.4);
-  }
+body {
+  background-color: #0A0A0A;
+  min-height: 100vh;
+  color: white;
 }
