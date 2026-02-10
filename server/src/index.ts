@@ -41,7 +41,18 @@ app.use(cors({
   credentials: true
 }));
 app.use(morgan('dev'));
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      frameSrc: ["'self'", "https://roninmediagroup.com", "https://www.roninmediagroup.com"],
+      frameAncestors: ["'self'", "https://roninmediagroup.com", "https://www.roninmediagroup.com"],
+      connectSrc: ["'self'", "wss:", "ws:"],
+    }
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

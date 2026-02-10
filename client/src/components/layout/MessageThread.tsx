@@ -3,6 +3,7 @@ import { useState } from 'react'
 
 interface MessageThreadProps {
   channelName: string
+  userEmail?: string
 }
 
 interface Message {
@@ -13,7 +14,7 @@ interface Message {
   avatar: string
 }
 
-export default function MessageThread({ channelName }: MessageThreadProps) {
+export default function MessageThread({ channelName, userEmail }: MessageThreadProps) {
   const [message, setMessage] = useState('')
 
   // Mock messages
@@ -56,6 +57,11 @@ export default function MessageThread({ channelName }: MessageThreadProps) {
         <Hash className="w-5 h-5 text-samurai-red" />
         <h3 className="text-lg font-bold">{channelName}</h3>
         <div className="flex-1" />
+        {userEmail && (
+          <div className="text-sm text-samurai-steel mr-4">
+            Logged in as: <span className="text-samurai-red">{userEmail}</span>
+          </div>
+        )}
         <div className="text-sm text-samurai-steel">
           3 members
         </div>
