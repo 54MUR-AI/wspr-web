@@ -3,6 +3,7 @@ import WorkspaceSidebar from './components/layout/WorkspaceSidebar'
 import ChannelList from './components/layout/ChannelList'
 import MessageThread from './components/layout/MessageThread'
 import { authManager } from './utils/auth'
+import { socketService } from './services/socket'
 import './index.css'
 
 function App() {
@@ -10,12 +11,23 @@ function App() {
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>('ronin-media')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userEmail, setUserEmail] = useState('')
+  const [userId, setUserId] = useState('')
+  const [isConnected, setIsConnected] = useState(false)
 
   useEffect(() => {
     const user = authManager.getUser()
     if (user) {
       setIsAuthenticated(true)
       setUserEmail(user.email)
+      setUserId(user.userId)
+      
+      // Connect to Socket.IO
+      socketService.connect(user.userId, user.email)
+      setIsConnected(true)
+      
+      return () => {
+        socketService.disconnect()
+      }
     }
   }, [])
 
@@ -45,23 +57,29 @@ function App() {
 
   return (
     <div className="flex h-screen bg-samurai-black text-white overflow-hidden">
-      {/* Left Sidebar - Workspace Switcher */}
-      <WorkspaceSidebar 
-        selectedWorkspace={selectedWorkspace}
-        onWorkspaceChange={setSelectedWorkspace}
-      />
+      {/* Left Sidebar - Workspace Switcher - Hidden on mobile */}
+      <div className="hidden md:block">
+        <WorkspaceSidebar 
+          selectedWorkspace={selectedWorkspace}
+          onWorkspaceChange={setSelectedWorkspace}
+        />
+      </div>
 
-      {/* Middle Sidebar - Channels/DMs */}
-      <ChannelList 
-        selectedChannel={selectedChannel}
-        onChannelSelect={setSelectedChannel}
-        workspaceName={selectedWorkspace}
-      />
+      {/* Middle Sidebar - Channels/DMs - Hidden on mobile, shown on tablet+ */}
+      <div className="hidden sm:block">
+        <ChannelList 
+          selectedChannel={selectedChannel}
+          onChannelSelect={setSelectedChannel}
+          workspaceName={selectedWorkspace}
+        />
+      </div>
 
-      {/* Main Content - Messages */}
+      {/* Main Content - Messages - Full width on mobile */}
       <MessageThread 
         channelName={selectedChannel}
         userEmail={userEmail}
+        userId={userId}
+        isConnected={isConnected}
       />
     </div>
   )
