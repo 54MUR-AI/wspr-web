@@ -1,4 +1,6 @@
 import express from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -6,6 +8,7 @@ import { errorHandler } from './middleware/error';
 import { db } from './database';
 
 const app = express();
+const httpServer = createServer(app);
 const port = process.env.PORT || 3001;
 
 // Database connection (optional for now)
