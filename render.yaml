@@ -1,0 +1,39 @@
+services:
+  # WSPR Backend API
+  - type: web
+    name: wspr-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd server && npm install && npm run build
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ORIGIN
+        value: https://wspr-web.onrender.com
+    healthCheckPath: /api/health
+
+  # WSPR Frontend (Static Site)
+  - type: web
+    name: wspr-web
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: ./client/build
+    envVars:
+      - key: VITE_API_URL
+        value: https://wspr-backend.onrender.com
+      - key: VITE_WS_URL
+        value: wss://wspr-backend.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
