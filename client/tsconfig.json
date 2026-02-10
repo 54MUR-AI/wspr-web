@@ -27,12 +27,21 @@
       "@assets/*": ["src/assets/*"]
     }
   },
-  "include": ["src"],
+  "include": [
+    "src/main.tsx",
+    "src/App.tsx",
+    "src/index.css",
+    "src/components/layout",
+    "src/utils/auth.ts"
+  ],
   "exclude": [
     "src/tests",
     "src/store",
+    "src/services",
     "src/utils/crypto",
     "src/utils/encryption.ts",
+    "src/pages",
+    "src/hooks",
     "node_modules"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
