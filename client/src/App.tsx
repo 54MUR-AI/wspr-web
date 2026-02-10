@@ -6,6 +6,7 @@ import { authManager } from './utils/auth'
 import { socketService } from './services/socket'
 import './index.css'
 
+// WSPR v2.0 - Samurai Redesign
 function App() {
   const [selectedChannel, setSelectedChannel] = useState<string>('general')
   const [selectedWorkspace, setSelectedWorkspace] = useState<string>('ronin-media')
