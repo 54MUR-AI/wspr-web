@@ -27,7 +27,7 @@ services:
   - type: web
     name: wspr-web
     runtime: static
-    branch: samurai-redesign
+    branch: master
     buildCommand: cd client && npm install && npm run build
     staticPublishPath: ./client/build
     envVars:
