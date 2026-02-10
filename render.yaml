@@ -24,7 +24,8 @@ services:
   # WSPR Frontend (Static Site)
   - type: web
     name: wspr-web
-    env: static
+    runtime: static
+    branch: samurai-redesign
     buildCommand: cd client && npm install && npm run build
     staticPublishPath: ./client/build
     envVars:
