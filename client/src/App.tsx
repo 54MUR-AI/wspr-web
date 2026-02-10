@@ -5,16 +5,21 @@ import MessageThread from './components/layout/MessageThread'
 import { authManager } from './utils/auth'
 import { socketService } from './services/socket'
 import { getOrCreateProfile, updateStatus } from './services/profile.service'
+import { getOrCreateDefaultWorkspace, getUserWorkspaces } from './services/workspace.service'
+import { getOrCreateDefaultChannels } from './services/channel.service'
+import { WsprWorkspace } from './lib/supabase'
 import './index.css'
 
 // WSPR v2.0 - Samurai Redesign
 function App() {
-  const [selectedChannel, setSelectedChannel] = useState<string>('general')
-  const [selectedWorkspace, setSelectedWorkspace] = useState<string>('ronin-media')
+  const [selectedChannel, setSelectedChannel] = useState<string>('')
+  const [selectedWorkspace, setSelectedWorkspace] = useState<WsprWorkspace | null>(null)
+  const [workspaces, setWorkspaces] = useState<WsprWorkspace[]>([])
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userEmail, setUserEmail] = useState('')
   const [userId, setUserId] = useState('')
   const [isConnected, setIsConnected] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -30,9 +35,27 @@ function App() {
         // Set user status to online
         await updateStatus(user.userId, 'online')
         
+        // Get or create default WSPR workspace
+        const defaultWorkspace = await getOrCreateDefaultWorkspace(user.userId)
+        if (defaultWorkspace) {
+          setSelectedWorkspace(defaultWorkspace)
+          
+          // Get or create default channels
+          const channels = await getOrCreateDefaultChannels(defaultWorkspace.id, user.userId)
+          if (channels.length > 0) {
+            setSelectedChannel(channels[0].id)
+          }
+        }
+        
+        // Load all user workspaces
+        const userWorkspaces = await getUserWorkspaces(user.userId)
+        setWorkspaces(userWorkspaces)
+        
         // Connect to Socket.IO
         socketService.connect(user.userId, user.email)
         setIsConnected(true)
+        
+        setIsInitializing(false)
       }
     }
 
@@ -72,13 +95,29 @@ function App() {
     )
   }
 
+  if (isInitializing) {
+    return (
+      <div className="flex h-screen bg-samurai-black text-white items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-samurai-red border-t-transparent mb-4"></div>
+          <p className="text-samurai-steel">Initializing WSPR...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex h-screen bg-samurai-black text-white overflow-hidden">
       {/* Left Sidebar - Workspace Switcher - Hidden on mobile */}
       <div className="hidden md:block">
         <WorkspaceSidebar 
-          selectedWorkspace={selectedWorkspace}
-          onWorkspaceChange={setSelectedWorkspace}
+          selectedWorkspace={selectedWorkspace?.id || ''}
+          onWorkspaceChange={(workspaceId) => {
+            const workspace = workspaces.find(w => w.id === workspaceId)
+            if (workspace) setSelectedWorkspace(workspace)
+          }}
+          workspaces={workspaces}
+          userId={userId}
         />
       </div>
 
@@ -87,13 +126,14 @@ function App() {
         <ChannelList 
           selectedChannel={selectedChannel}
           onChannelSelect={setSelectedChannel}
-          workspaceName={selectedWorkspace}
+          workspaceId={selectedWorkspace?.id || ''}
+          userId={userId}
         />
       </div>
 
       {/* Main Content - Messages - Full width on mobile */}
       <MessageThread 
-        channelName={selectedChannel}
+        channelId={selectedChannel}
         userEmail={userEmail}
         userId={userId}
         isConnected={isConnected}
