@@ -8,13 +8,16 @@ import { db } from './database';
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Database connection
-db.$connect()
-  .then(() => console.log('Database connected'))
-  .catch((error) => {
-    console.error('Database connection error:', error);
-    process.exit(1);
-  });
+// Database connection (optional for now)
+if (process.env.DATABASE_URL) {
+  db.$connect()
+    .then(() => console.log('Database connected'))
+    .catch((error) => {
+      console.warn('Database connection failed:', error.message);
+    });
+} else {
+  console.log('No DATABASE_URL configured - running without database');
+}
 
 // Middleware
 const allowedOrigins = [
