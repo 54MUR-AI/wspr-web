@@ -17,21 +17,5 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: ORIGIN
-        value: https://wspr-web.onrender.com
+        value: https://roninmediagroup.com
     healthCheckPath: /api/health
-
-  # WSPR Frontend (Static Site)
-  - type: web
-    name: wspr-web
-    env: static
-    buildCommand: cd client && npm install && npm run build
-    staticPublishPath: ./client/build
-    envVars:
-      - key: VITE_API_URL
-        value: https://wspr-backend.onrender.com
-      - key: VITE_WS_URL
-        value: wss://wspr-backend.onrender.com
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
