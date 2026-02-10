@@ -23,6 +23,9 @@ const allowedOrigins = [
   process.env.ORIGIN || 'http://localhost:3000',
   'https://roninmediagroup.com',
   'https://www.roninmediagroup.com',
+  'https://roninmedia.studio',
+  'https://www.roninmedia.studio',
+  'https://wspr-web.onrender.com',
   'http://localhost:5173', // Vite dev
   'http://localhost:3000'  // Client dev
 ];
@@ -45,8 +48,8 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      frameSrc: ["'self'", "https://roninmediagroup.com", "https://www.roninmediagroup.com"],
-      frameAncestors: ["'self'", "https://roninmediagroup.com", "https://www.roninmediagroup.com"],
+      frameSrc: ["'self'", "https://roninmediagroup.com", "https://www.roninmediagroup.com", "https://roninmedia.studio", "https://www.roninmedia.studio"],
+      frameAncestors: ["'self'", "https://roninmediagroup.com", "https://www.roninmediagroup.com", "https://roninmedia.studio", "https://www.roninmedia.studio"],
       connectSrc: ["'self'", "wss:", "ws:"],
     }
   },
