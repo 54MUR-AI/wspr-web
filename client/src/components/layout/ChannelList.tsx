@@ -154,7 +154,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
       <FindContactsModal 
         isOpen={showFindContacts}
         onClose={() => setShowFindContacts(false)}
-        userId={userId}
+        currentUserId={userId}
         onContactAdded={loadContacts}
       />
 
