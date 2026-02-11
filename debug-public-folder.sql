@@ -57,12 +57,24 @@ JOIN wspr_workspaces w ON w.id = wm.workspace_id
 WHERE w.name = 'Public';
 
 -- 5. Test query that LDGR uses to get shared folders
--- Replace 'YOUR_USER_ID' with actual user ID
-SELECT f.*
-FROM folders f
-WHERE f.id IN (
-  SELECT folder_id 
-  FROM folder_access 
-  WHERE user_id = 'YOUR_USER_ID'
-)
-AND f.parent_id IS NULL;
+-- This shows what folders each user should see
+SELECT 
+  u.email,
+  f.id as folder_id,
+  f.name as folder_name,
+  fa.access_level
+FROM folder_access fa
+JOIN auth.users u ON u.id = fa.user_id
+JOIN folders f ON f.id = fa.folder_id
+WHERE f.parent_id IS NULL
+ORDER BY u.email, f.name;
+
+-- 6. Check if Public workspace LDGR folder was ever created
+SELECT 
+  CASE 
+    WHEN COUNT(*) = 0 THEN '❌ Public workspace has NO ldgr_folder_id - folder was never created'
+    WHEN COUNT(*) > 0 AND MAX(ldgr_folder_id) IS NULL THEN '❌ Public workspace exists but ldgr_folder_id is NULL'
+    ELSE '✅ Public workspace has ldgr_folder_id: ' || MAX(ldgr_folder_id)::text
+  END as status
+FROM wspr_workspaces
+WHERE name = 'Public';
