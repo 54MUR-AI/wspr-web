@@ -118,6 +118,7 @@ function App() {
           }}
           workspaces={workspaces}
           userId={userId}
+          userEmail={userEmail}
         />
       </div>
 
