@@ -115,19 +115,28 @@ export async function getOrCreateDefaultChannels(
   userId: string
 ): Promise<WsprChannel[]> {
   try {
+    // Always fetch existing channels first
     const existingChannels = await getWorkspaceChannels(workspaceId)
     
+    // If channels exist, return them immediately
     if (existingChannels.length > 0) {
       return existingChannels
     }
 
-    // Create default channels
+    // Only create default channels if none exist
     const defaultChannels = [
       { name: 'general', description: 'General discussion', isPrivate: false },
       { name: 'random', description: 'Random chat', isPrivate: false }
     ]
 
     const channels: WsprChannel[] = []
+    
+    // Check again right before creating to prevent race conditions
+    const recheckChannels = await getWorkspaceChannels(workspaceId)
+    if (recheckChannels.length > 0) {
+      return recheckChannels
+    }
+    
     for (const channelData of defaultChannels) {
       const channel = await createChannel(
         workspaceId,

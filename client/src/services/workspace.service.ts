@@ -96,13 +96,14 @@ export async function createWorkspace(
  */
 export async function getOrCreateDefaultWorkspace(userId: string): Promise<WsprWorkspace | null> {
   try {
-    // Check if Public workspace exists (shared workspace for all users)
-    const { data: publicWorkspace } = await supabase
+    // Check if Public workspace exists (case-insensitive)
+    const { data: publicWorkspaces } = await supabase
       .from('wspr_workspaces')
       .select('*')
-      .eq('name', 'Public')
+      .ilike('name', 'public')
       .eq('is_public', true)
-      .single()
+    
+    const publicWorkspace = publicWorkspaces?.[0]
     
     if (publicWorkspace) {
       // Ensure user is a member of Public workspace
@@ -111,17 +112,21 @@ export async function getOrCreateDefaultWorkspace(userId: string): Promise<WsprW
         .select('id')
         .eq('workspace_id', publicWorkspace.id)
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
       
       if (!membership) {
         // Add user as member of Public workspace
-        await supabase
+        const { error: insertError } = await supabase
           .from('wspr_workspace_members')
           .insert({
             workspace_id: publicWorkspace.id,
             user_id: userId,
             role: 'member'
           })
+        
+        if (insertError) {
+          console.error('Error adding user to Public workspace:', insertError)
+        }
       }
       
       return publicWorkspace
