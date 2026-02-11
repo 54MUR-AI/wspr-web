@@ -86,18 +86,21 @@ function App() {
         // Use the authenticated session user ID for all database operations
         const authenticatedUserId = session.user.id
 
+        // Get display name from RMG auth metadata (source of truth)
+        const displayName = session.user.user_metadata?.display_name || user.username || user.email?.split('@')[0] || 'Unknown'
+
         // Sync RMG user data to wspr_profiles (for contacts to work)
         try {
           await supabase
             .from('wspr_profiles')
             .upsert({
               id: authenticatedUserId,
-              display_name: user.username,
+              display_name: displayName,
               email: user.email,
               status: 'online',
               updated_at: new Date().toISOString()
             }, { onConflict: 'id' })
-          console.log('Profile synced successfully')
+          console.log('Profile synced successfully with display name:', displayName)
         } catch (e) {
           console.error('Failed to sync profile:', e)
         }
