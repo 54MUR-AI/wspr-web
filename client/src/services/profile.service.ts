@@ -110,11 +110,11 @@ export async function getProfile(userId: string): Promise<WsprProfile | null> {
  */
 export async function searchUsers(query: string, limit: number = 20): Promise<WsprProfile[]> {
   try {
-    // Search by display name or email
+    // Search by display name only (wspr_profiles doesn't have email column)
     const { data, error } = await supabase
       .from('wspr_profiles')
       .select('*')
-      .or(`display_name.ilike.%${query}%,email.ilike.%${query}%`)
+      .ilike('display_name', `%${query}%`)
       .limit(limit)
 
     if (error) {
