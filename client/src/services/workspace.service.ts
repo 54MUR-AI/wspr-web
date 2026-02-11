@@ -36,7 +36,6 @@ export async function createWorkspace(
   isPublic: boolean = false
 ): Promise<WsprWorkspace | null> {
   try {
-    // TODO: Create LDGR folder first, then link it
     const { data: workspace, error: workspaceError } = await supabase
       .from('wspr_workspaces')
       .insert({
@@ -66,6 +65,20 @@ export async function createWorkspace(
       console.error('Error adding workspace member:', memberError)
       return null
     }
+
+    // Request LDGR folder creation from RMG
+    console.log('📁 Sending workspace folder creation request to RMG:', {
+      workspaceId: workspace.id,
+      workspaceName: name,
+      ownerId: userId
+    })
+    
+    window.parent.postMessage({
+      type: 'WSPR_CREATE_WORKSPACE_FOLDER',
+      workspaceId: workspace.id,
+      workspaceName: name,
+      ownerId: userId
+    }, '*')
 
     return workspace
   } catch (error) {
