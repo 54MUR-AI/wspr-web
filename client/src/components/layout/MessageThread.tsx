@@ -1,7 +1,7 @@
-import { Send, Paperclip, Smile, Hash, Menu } from 'lucide-react'
+import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { socketService, Message } from '../../services/socket'
-import { getChannelMessages, sendChannelMessage, subscribeToChannelMessages, decryptMessageContent } from '../../services/supabase-message.service'
+import { getChannelMessages, sendChannelMessage, subscribeToChannelMessages, decryptMessageContent, editMessage, deleteMessage } from '../../services/supabase-message.service'
 import { supabase } from '../../lib/supabase'
 import type { WsprMessage } from '../../lib/supabase'
 
@@ -20,6 +20,8 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [isLoading, setIsLoading] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [channelName, setChannelName] = useState('')
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [editingContent, setEditingContent] = useState('')
 
   useEffect(() => {
     if (!channelId || !userId) {
@@ -78,17 +80,54 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   }, [messages])
 
   const handleSend = async () => {
-    if (message.trim() && userId && channelId) {
-      // Send message to Supabase
-      const newMessage = await sendChannelMessage(channelId, userId, message.trim())
-      
-      if (newMessage) {
-        // Add message immediately to UI (optimistic update)
-        setMessages(prev => [...prev, newMessage])
-        setMessage('')
-        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
-      }
+    if (!message.trim() || !channelId || !userId) return
+
+    const newMessage = await sendChannelMessage(channelId, userId, message)
+    if (newMessage) {
+      // Optimistically add message to UI
+      setMessages(prev => [...prev, newMessage])
+      setMessage('')
     }
+  }
+
+  const handleEdit = async (messageId: string) => {
+    if (!editingContent.trim() || !userId) return
+
+    const success = await editMessage(messageId, userId, editingContent)
+    if (success) {
+      // Update message in UI
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId 
+          ? { ...msg, content: editingContent, edited_at: new Date().toISOString() }
+          : msg
+      ))
+      setEditingMessageId(null)
+      setEditingContent('')
+    } else {
+      alert('Failed to edit message')
+    }
+  }
+
+  const handleDelete = async (messageId: string) => {
+    if (!userId || !confirm('Delete this message?')) return
+
+    const success = await deleteMessage(messageId, userId)
+    if (success) {
+      // Remove message from UI
+      setMessages(prev => prev.filter(msg => msg.id !== messageId))
+    } else {
+      alert('Failed to delete message')
+    }
+  }
+
+  const startEdit = (msg: WsprMessage) => {
+    setEditingMessageId(msg.id)
+    setEditingContent(userId ? decryptMessageContent(msg, userId) : msg.content)
+  }
+
+  const cancelEdit = () => {
+    setEditingMessageId(null)
+    setEditingContent('')
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -153,6 +192,8 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
             {messages.map((msg) => {
               const displayName = (msg as any).user?.display_name || 'Unknown'
               const decryptedContent = userId ? decryptMessageContent(msg, userId) : msg.content
+              const isAuthor = msg.user_id === userId
+              const isEditing = editingMessageId === msg.id
               
               return (
                 <div key={msg.id} className="flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors">
@@ -163,8 +204,56 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                     <div className="flex items-baseline gap-2 mb-1">
                       <span className="font-semibold text-white truncate">{displayName}</span>
                       <span className="text-xs text-samurai-steel flex-shrink-0">{formatTime(msg.created_at)}</span>
+                      {msg.edited_at && (
+                        <span className="text-xs text-samurai-steel italic">(edited)</span>
+                      )}
                     </div>
-                    <p className="text-samurai-steel-light break-words">{decryptedContent}</p>
+                    {isEditing ? (
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleEdit(msg.id)}
+                          className="flex-1 bg-samurai-black border border-samurai-grey-dark rounded px-2 py-1 text-white text-sm"
+                          autoFocus
+                        />
+                        <button
+                          onClick={() => handleEdit(msg.id)}
+                          className="text-samurai-red hover:text-samurai-red-dark text-xs"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEdit}
+                          className="text-samurai-steel hover:text-white text-xs"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-2">
+                        <p className="text-samurai-steel-light break-words flex-1">{decryptedContent}</p>
+                        {isAuthor && (
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => startEdit(msg)}
+                              className="p-1 hover:bg-samurai-grey-darker rounded"
+                              title="Edit message"
+                            >
+                              <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(msg.id)}
+                              className="p-1 hover:bg-samurai-grey-darker rounded"
+                              title="Delete message"
+                            >
+                              <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )

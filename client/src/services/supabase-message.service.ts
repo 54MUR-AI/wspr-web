@@ -191,6 +191,97 @@ export function decryptMessageContent(message: WsprMessage, userId: string): str
 }
 
 /**
+ * Edit a message (author only)
+ */
+export async function editMessage(
+  messageId: string,
+  userId: string,
+  newContent: string
+): Promise<boolean> {
+  try {
+    // Verify user is the author
+    const { data: message, error: fetchError } = await supabase
+      .from('wspr_messages')
+      .select('user_id')
+      .eq('id', messageId)
+      .single()
+
+    if (fetchError || !message) {
+      console.error('Error fetching message:', fetchError)
+      return false
+    }
+
+    if (message.user_id !== userId) {
+      console.error('Only message author can edit')
+      return false
+    }
+
+    // Encrypt and update message
+    const encryptedContent = encryptMessage(newContent, userId)
+    const { error: updateError } = await supabase
+      .from('wspr_messages')
+      .update({
+        content: encryptedContent,
+        edited_at: new Date().toISOString()
+      })
+      .eq('id', messageId)
+
+    if (updateError) {
+      console.error('Error updating message:', updateError)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Edit message error:', error)
+    return false
+  }
+}
+
+/**
+ * Delete a message (author only)
+ */
+export async function deleteMessage(
+  messageId: string,
+  userId: string
+): Promise<boolean> {
+  try {
+    // Verify user is the author
+    const { data: message, error: fetchError } = await supabase
+      .from('wspr_messages')
+      .select('user_id')
+      .eq('id', messageId)
+      .single()
+
+    if (fetchError || !message) {
+      console.error('Error fetching message:', fetchError)
+      return false
+    }
+
+    if (message.user_id !== userId) {
+      console.error('Only message author can delete')
+      return false
+    }
+
+    // Delete message
+    const { error: deleteError } = await supabase
+      .from('wspr_messages')
+      .delete()
+      .eq('id', messageId)
+
+    if (deleteError) {
+      console.error('Error deleting message:', deleteError)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Delete message error:', error)
+    return false
+  }
+}
+
+/**
  * Subscribe to new messages in a channel (real-time)
  */
 export function subscribeToChannelMessages(

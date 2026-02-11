@@ -74,7 +74,7 @@ export async function createWorkspace(
     })
     
     window.parent.postMessage({
-      type: 'WSPR_CREATE_WORKSPACE_FOLDER',
+      type: 'WSPR_CREATE_LDGR_FOLDER',
       workspaceId: workspace.id,
       workspaceName: name,
       ownerId: userId
