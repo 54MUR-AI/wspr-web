@@ -11,15 +11,15 @@ export default function SettingsModal({ isOpen, onClose, userEmail }: SettingsMo
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-samurai-grey-darker border border-samurai-grey-dark rounded-lg w-full max-w-md">
+      <div className="bg-samurai-grey-darker border-2 border-samurai-red rounded-xl shadow-2xl shadow-samurai-red/30 w-full max-w-md">
         {/* Header */}
-        <div className="p-6 border-b border-samurai-grey-dark flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">Settings</h2>
+        <div className="p-6 border-b-2 border-samurai-red flex items-center justify-between">
+          <h2 className="text-2xl font-black text-white neon-text">Settings</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-samurai-grey-dark rounded-lg transition-colors"
+            className="text-white/70 hover:text-samurai-red transition-colors"
           >
-            <X className="w-5 h-5 text-samurai-steel hover:text-white" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -66,10 +66,10 @@ export default function SettingsModal({ isOpen, onClose, userEmail }: SettingsMo
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-samurai-grey-dark flex justify-end">
+        <div className="p-6 border-t-2 border-samurai-red flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-samurai-grey-dark hover:bg-samurai-grey text-white rounded-lg transition-colors"
+            className="px-6 py-3 bg-samurai-red hover:bg-samurai-red-dark text-white font-bold rounded-lg transition-all shadow-lg hover:shadow-samurai-red/50"
           >
             Close
           </button>
