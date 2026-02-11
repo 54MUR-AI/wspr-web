@@ -14,8 +14,9 @@ DROP POLICY IF EXISTS "Workspace owners can delete" ON wspr_workspaces;
 DROP POLICY IF EXISTS "Workspace owners can delete their workspaces" ON wspr_workspaces;
 DROP POLICY IF EXISTS "workspaces_delete" ON wspr_workspaces;
 
--- Ensure RLS is enabled
+-- Ensure RLS is enabled but NOT forced (FORCE RLS blocks even valid inserts)
 ALTER TABLE wspr_workspaces ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wspr_workspaces NO FORCE ROW LEVEL SECURITY;
 
 -- Create ONLY the correct policies (no duplicates)
 
