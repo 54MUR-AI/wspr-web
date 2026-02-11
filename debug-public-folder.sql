@@ -72,9 +72,9 @@ ORDER BY u.email, f.name;
 -- 6. Check if Public workspace LDGR folder was ever created
 SELECT 
   CASE 
-    WHEN COUNT(*) = 0 THEN '❌ Public workspace has NO ldgr_folder_id - folder was never created'
-    WHEN COUNT(*) > 0 AND MAX(ldgr_folder_id) IS NULL THEN '❌ Public workspace exists but ldgr_folder_id is NULL'
-    ELSE '✅ Public workspace has ldgr_folder_id: ' || MAX(ldgr_folder_id)::text
+    WHEN COUNT(*) = 0 THEN '❌ Public workspace does not exist'
+    WHEN COUNT(*) > 0 AND COUNT(ldgr_folder_id) = 0 THEN '❌ Public workspace exists but ldgr_folder_id is NULL'
+    ELSE '✅ Public workspace has ldgr_folder_id: ' || MAX(ldgr_folder_id::text)
   END as status
 FROM wspr_workspaces
 WHERE name = 'Public';
