@@ -4,6 +4,7 @@ import { getWorkspaceChannels } from '../../services/channel.service'
 import { getContacts } from '../../services/contact.service'
 import { WsprChannel } from '../../lib/supabase'
 import FindContactsModal from '../contacts/FindContactsModal'
+import CreateChannelModal from '../channels/CreateChannelModal'
 
 interface ChannelListProps {
   selectedChannel: string
@@ -70,7 +71,14 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
               <ChevronDown className={`w-4 h-4 transition-transform ${channelsExpanded ? '' : '-rotate-90'}`} />
               <span className="text-sm font-semibold">Channels</span>
             </div>
-            <Plus className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Plus 
+              className="w-4 h-4 text-samurai-red hover:text-samurai-red-dark transition-colors cursor-pointer" 
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowCreateChannel(true)
+              }}
+              title="Create Channel"
+            />
           </button>
 
           {channelsExpanded && (
