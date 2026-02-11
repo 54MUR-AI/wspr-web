@@ -1,22 +1,25 @@
--- Fix workspace privacy - ensure workspaces are only visible to members
--- Run this to verify and fix workspace RLS policies
+-- Cleanup duplicate and conflicting workspace policies
+-- There are multiple SELECT, UPDATE, and DELETE policies causing conflicts
 
--- First, check current policies
-SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
-FROM pg_policies
-WHERE tablename = 'wspr_workspaces'
-ORDER BY policyname;
-
--- Drop any overly permissive policies
+-- Drop ALL existing policies (including duplicates)
 DROP POLICY IF EXISTS "Users can view their workspaces" ON wspr_workspaces;
+DROP POLICY IF EXISTS "Users can view workspaces they own or are members of" ON wspr_workspaces;
+DROP POLICY IF EXISTS "workspaces_select" ON wspr_workspaces;
 DROP POLICY IF EXISTS "Users can create workspaces" ON wspr_workspaces;
+DROP POLICY IF EXISTS "workspaces_insert" ON wspr_workspaces;
 DROP POLICY IF EXISTS "Workspace owners can update" ON wspr_workspaces;
+DROP POLICY IF EXISTS "Workspace owners can update their workspaces" ON wspr_workspaces;
+DROP POLICY IF EXISTS "workspaces_update" ON wspr_workspaces;
 DROP POLICY IF EXISTS "Workspace owners can delete" ON wspr_workspaces;
+DROP POLICY IF EXISTS "Workspace owners can delete their workspaces" ON wspr_workspaces;
+DROP POLICY IF EXISTS "workspaces_delete" ON wspr_workspaces;
 
 -- Ensure RLS is enabled
 ALTER TABLE wspr_workspaces ENABLE ROW LEVEL SECURITY;
 
--- Create strict SELECT policy - only show workspaces where user is a member
+-- Create ONLY the correct policies (no duplicates)
+
+-- SELECT: Only show workspaces where user is a member
 CREATE POLICY "Users can view their workspaces"
 ON wspr_workspaces
 FOR SELECT
@@ -29,14 +32,14 @@ USING (
   )
 );
 
--- Allow users to create workspaces (they own)
+-- INSERT: Users can create workspaces they own
 CREATE POLICY "Users can create workspaces"
 ON wspr_workspaces
 FOR INSERT
 TO authenticated
 WITH CHECK (owner_id = auth.uid());
 
--- Allow owners to update their workspaces
+-- UPDATE: Only owners can update their workspaces
 CREATE POLICY "Workspace owners can update"
 ON wspr_workspaces
 FOR UPDATE
@@ -44,7 +47,7 @@ TO authenticated
 USING (owner_id = auth.uid())
 WITH CHECK (owner_id = auth.uid());
 
--- Allow owners to delete their workspaces (except Public)
+-- DELETE: Only owners can delete (except Public workspace)
 CREATE POLICY "Workspace owners can delete"
 ON wspr_workspaces
 FOR DELETE
@@ -54,7 +57,7 @@ USING (
   AND name != 'Public'
 );
 
--- Verify policies are in place
+-- Verify only 4 policies exist now (one for each operation)
 SELECT 
   policyname,
   cmd,
@@ -68,4 +71,10 @@ SELECT
   END as with_check_clause
 FROM pg_policies
 WHERE tablename = 'wspr_workspaces'
-ORDER BY policyname;
+ORDER BY cmd, policyname;
+
+-- Should show exactly 4 policies:
+-- 1. Users can create workspaces (INSERT)
+-- 2. Workspace owners can delete (DELETE)
+-- 3. Users can view their workspaces (SELECT)
+-- 4. Workspace owners can update (UPDATE)
