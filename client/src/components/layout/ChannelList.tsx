@@ -1,6 +1,6 @@
-import { Hash, Users, Lock, Plus, ChevronDown, Search, UserPlus } from 'lucide-react'
+import { Hash, Users, Lock, Plus, ChevronDown, Search, UserPlus, Trash2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { getWorkspaceChannels } from '../../services/channel.service'
+import { getWorkspaceChannels, deleteChannel } from '../../services/channel.service'
 import { getContacts } from '../../services/contact.service'
 import { WsprChannel } from '../../lib/supabase'
 import FindContactsModal from '../contacts/FindContactsModal'
@@ -20,6 +20,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
   const [contacts, setContacts] = useState<any[]>([])
   const [showFindContacts, setShowFindContacts] = useState(false)
   const [showCreateChannel, setShowCreateChannel] = useState(false)
+  const [deletingChannel, setDeletingChannel] = useState<string | null>(null)
 
   useEffect(() => {
     if (workspaceId) {
@@ -41,6 +42,28 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
   const loadContacts = async () => {
     const contactData = await getContacts(userId)
     setContacts(contactData)
+  }
+
+  const handleDeleteChannel = async (channelId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    
+    if (!confirm('Delete this channel? All messages and files will be permanently deleted.')) {
+      return
+    }
+
+    setDeletingChannel(channelId)
+    const success = await deleteChannel(channelId, userId)
+    
+    if (success) {
+      loadChannels()
+      if (selectedChannel === channelId) {
+        onChannelSelect('')
+      }
+    } else {
+      alert('Failed to delete channel')
+    }
+    
+    setDeletingChannel(null)
   }
 
   return (
@@ -78,25 +101,29 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
                 e.stopPropagation()
                 setShowCreateChannel(true)
               }}
-              title="Create Channel"
             />
           </button>
 
           {channelsExpanded && (
             <div className="mt-1 space-y-0.5">
               {channels.map((channel) => (
-                <button
-                  key={channel.id}
-                  onClick={() => onChannelSelect(channel.id)}
-                  className={`w-full flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm transition-all ${
-                    selectedChannel === channel.id
-                      ? 'bg-samurai-red text-white font-semibold'
-                      : 'text-samurai-steel hover:bg-samurai-grey-darker hover:text-white'
-                  }`}
-                >
-                  {channel.is_private ? <Lock className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
-                  <span>{channel.name}</span>
-                </button>
+                <div key={channel.id} className="group relative">
+                  <button
+                    onClick={() => onChannelSelect(channel.id)}
+                    className={`w-full flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm transition-all ${
+                      selectedChannel === channel.id
+                        ? 'bg-samurai-red text-white font-semibold'
+                        : 'text-samurai-steel hover:bg-samurai-grey-darker hover:text-white'
+                    }`}
+                  >
+                    {channel.is_private ? <Lock className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
+                    <span className="flex-1 text-left">{channel.name}</span>
+                    <Trash2 
+                      className="w-3 h-3 opacity-0 group-hover:opacity-100 text-samurai-steel hover:text-samurai-red transition-all cursor-pointer"
+                      onClick={(e) => handleDeleteChannel(channel.id, e)}
+                    />
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -118,7 +145,6 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
                 e.stopPropagation()
                 setShowFindContacts(true)
               }}
-              title="Find Contacts"
             />
           </button>
 
