@@ -108,13 +108,14 @@ export async function getProfile(userId: string): Promise<WsprProfile | null> {
 /**
  * Search all RMG users by email or display name
  */
-export async function searchUsers(query: string): Promise<WsprProfile[]> {
+export async function searchUsers(query: string, limit: number = 20): Promise<WsprProfile[]> {
   try {
+    // Search by display name only (we can't directly search auth.users email from client)
     const { data, error } = await supabase
       .from('wspr_profiles')
       .select('*')
-      .or(`display_name.ilike.%${query}%,id.in.(select id from auth.users where email ilike '%${query}%')`)
-      .limit(20)
+      .ilike('display_name', `%${query}%`)
+      .limit(limit)
 
     if (error) {
       console.error('Error searching users:', error)
