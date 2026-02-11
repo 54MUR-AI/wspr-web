@@ -25,7 +25,16 @@ function App() {
   useEffect(() => {
     // Listen for messages from RMG parent window
     const handleMessage = (event: MessageEvent) => {
+      // Accept messages from RMG domains
+      const allowedOrigins = ['https://roninmediagroup.com', 'http://localhost:5173', 'http://localhost:3000']
+      if (!allowedOrigins.includes(event.origin)) {
+        return
+      }
+
+      console.log('WSPR received message:', event.data)
+
       if (event.data.type === 'RMG_TOGGLE_SETTINGS') {
+        console.log('Toggling settings modal')
         setShowSettings(prev => !prev)
       } else if (event.data.type === 'RMG_AUTH_TOKEN' && event.data.authToken) {
         try {

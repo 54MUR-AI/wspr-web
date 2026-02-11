@@ -19,6 +19,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
   const [channels, setChannels] = useState<WsprChannel[]>([])
   const [contacts, setContacts] = useState<any[]>([])
   const [showFindContacts, setShowFindContacts] = useState(false)
+  const [showCreateChannel, setShowCreateChannel] = useState(false)
 
   useEffect(() => {
     if (workspaceId) {
