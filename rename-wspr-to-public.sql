@@ -28,11 +28,11 @@ ON CONFLICT (workspace_id, user_id) DO NOTHING;
 
 -- Grant all users access to the Public workspace LDGR folder
 -- Note: This requires the folder_access table from LDGR
-INSERT INTO folder_access (folder_id, user_id, permission)
+INSERT INTO folder_access (folder_id, user_id, access_level)
 SELECT 
   w.ldgr_folder_id as folder_id,
   u.id as user_id,
-  'read' as permission
+  'read' as access_level
 FROM wspr_workspaces w
 CROSS JOIN auth.users u
 WHERE w.name = 'Public'
