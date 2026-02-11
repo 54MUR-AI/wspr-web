@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, MessageSquare } from 'lucide-react'
 import { useState } from 'react'
 import { WsprWorkspace } from '../../lib/supabase'
 import CreateWorkspaceModal from '../workspaces/CreateWorkspaceModal'
@@ -44,6 +44,20 @@ export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange,
 
   return (
     <div className="w-20 bg-samurai-black-light border-r border-samurai-grey-dark flex flex-col items-center py-4 gap-3">
+      {/* WSPR Logo/Title */}
+      <div className="mb-4 flex flex-col items-center">
+        <div className="w-12 h-12 bg-samurai-red rounded-lg flex items-center justify-center mb-2 animate-glow-pulse">
+          <MessageSquare className="w-6 h-6 text-white" />
+        </div>
+        <div className="text-center">
+          <div className="text-white font-bold text-sm tracking-wider">WSPR</div>
+          <div className="text-[8px] text-samurai-steel leading-tight">Web Secure<br/>P2P Relay</div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="w-12 h-px bg-samurai-grey-dark mb-2" />
+
       {/* Workspaces */}
       {workspaces.map((workspace) => (
         <div key={workspace.id} className="relative group">
