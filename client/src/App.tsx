@@ -29,6 +29,31 @@ function App() {
         setUserEmail(user.email)
         setUserId(user.userId)
         
+        // Check if we have a Supabase session, if not try to get one from RMG
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          // Listen for auth token from RMG parent window
+          window.addEventListener('message', async (event) => {
+            if (event.data.type === 'RMG_AUTH_TOKEN' && event.data.authToken) {
+              try {
+                const authData = JSON.parse(event.data.authToken)
+                if (authData.access_token) {
+                  await supabase.auth.setSession({
+                    access_token: authData.access_token,
+                    refresh_token: authData.refresh_token
+                  })
+                }
+              } catch (e) {
+                console.error('Failed to set Supabase session:', e)
+              }
+            }
+          })
+          
+          // Request auth token from parent
+          window.parent.postMessage({ type: 'WSPR_REQUEST_AUTH' }, '*')
+        }
+        
         // Initialize user profile in Supabase
         await getOrCreateProfile(user.userId, user.email)
         
