@@ -127,6 +127,23 @@ export async function getOrCreateDefaultWorkspace(userId: string): Promise<WsprW
         if (insertError) {
           console.error('Error adding user to Public workspace:', insertError)
         }
+        
+        // Grant read access to Public workspace LDGR folder
+        if (publicWorkspace.ldgr_folder_id) {
+          const { error: accessError } = await supabase
+            .from('folder_access')
+            .insert({
+              folder_id: publicWorkspace.ldgr_folder_id,
+              user_id: userId,
+              access_level: 'read'
+            })
+            .select()
+            .single()
+          
+          if (accessError && accessError.code !== '23505') { // Ignore duplicate key errors
+            console.error('Error granting Public folder access:', accessError)
+          }
+        }
       }
       
       return publicWorkspace
