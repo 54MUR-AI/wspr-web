@@ -23,13 +23,13 @@ export default function CreateChannelModal({ isOpen, onClose, workspaceId, userI
 
     setIsCreating(true)
     try {
-      await createChannel({
-        workspace_id: workspaceId,
-        name: channelName.toLowerCase().replace(/\s+/g, '-'),
-        description: description || null,
-        is_private: isPrivate,
-        created_by: userId
-      })
+      await createChannel(
+        workspaceId,
+        userId,
+        channelName,
+        description || undefined,
+        isPrivate
+      )
 
       setChannelName('')
       setDescription('')
