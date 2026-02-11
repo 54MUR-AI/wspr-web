@@ -9,7 +9,7 @@ export async function getContacts(userId: string): Promise<(WsprContact & { prof
       .from('wspr_contacts')
       .select(`
         *,
-        profile:wspr_profiles!wspr_contacts_contact_id_fkey(*)
+        profile:wspr_profiles!wspr_contacts_contact_profile_fkey(*)
       `)
       .eq('user_id', userId)
       .eq('status', 'accepted')
