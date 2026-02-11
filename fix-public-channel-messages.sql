@@ -7,8 +7,9 @@ DROP POLICY IF EXISTS "Users can insert messages in their channels" ON wspr_mess
 DROP POLICY IF EXISTS "Users can update their own messages" ON wspr_messages;
 DROP POLICY IF EXISTS "Users can delete their own messages" ON wspr_messages;
 
--- Ensure RLS is enabled
+-- Ensure RLS is enabled but NOT forced (FORCE RLS blocks even valid inserts)
 ALTER TABLE wspr_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wspr_messages NO FORCE ROW LEVEL SECURITY;
 
 -- SELECT: Users can view messages in channels they have access to OR in Public workspace
 CREATE POLICY "Users can view messages in their channels"
