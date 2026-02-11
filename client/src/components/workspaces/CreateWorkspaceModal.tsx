@@ -32,14 +32,8 @@ export default function CreateWorkspaceModal({ isOpen, onClose, userId, onWorksp
         throw new Error('Failed to create workspace')
       }
 
-      // Create LDGR folder for this workspace
-      // Send message to parent RMG to create LDGR folder
-      window.parent.postMessage({
-        type: 'WSPR_CREATE_LDGR_FOLDER',
-        workspaceId: workspace.id,
-        workspaceName: workspaceName,
-        ownerId: userId
-      }, '*')
+      // LDGR folder creation is already handled in workspace.service.ts
+      // No need to send duplicate message here
 
       setWorkspaceName('')
       setDescription('')
