@@ -69,6 +69,21 @@ function App() {
           // Request auth token from parent
           window.parent.postMessage({ type: 'WSPR_REQUEST_AUTH' }, '*')
         }
+
+        // Sync RMG user data to wspr_profiles (for contacts to work)
+        try {
+          await supabase
+            .from('wspr_profiles')
+            .upsert({
+              id: user.userId,
+              display_name: user.username,
+              email: user.email,
+              status: 'online',
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'id' })
+        } catch (e) {
+          console.error('Failed to sync profile:', e)
+        }
         
         // Get or create default WSPR workspace
         const defaultWorkspace = await getOrCreateDefaultWorkspace(user.userId)
