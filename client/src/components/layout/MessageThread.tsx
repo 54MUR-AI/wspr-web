@@ -23,6 +23,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [isLoading, setIsLoading] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [channelName, setChannelName] = useState('')
+  const [channelFolderId, setChannelFolderId] = useState<string | null>(null)
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editingContent, setEditingContent] = useState('')
   const [showAttachmentModal, setShowAttachmentModal] = useState(false)
@@ -36,16 +37,17 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       return
     }
 
-    // Fetch channel name
-    const fetchChannelName = async () => {
+    // Fetch channel name and folder ID
+    const fetchChannelInfo = async () => {
       const { data } = await supabase
         .from('wspr_channels')
-        .select('name')
+        .select('name, ldgr_folder_id')
         .eq('id', channelId)
         .single()
       
       if (data) {
         setChannelName(data.name)
+        setChannelFolderId(data.ldgr_folder_id)
       }
     }
 
@@ -71,7 +73,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     }
 
-    fetchChannelName()
+    fetchChannelInfo()
     loadMessages()
 
     // Subscribe to real-time messages
@@ -390,6 +392,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
         onClose={() => setShowAttachmentModal(false)}
         onAttachFile={handleAttachFile}
         userId={userId || ''}
+        channelFolderId={channelFolderId}
       />
     </div>
   )
