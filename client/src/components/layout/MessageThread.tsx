@@ -41,7 +41,13 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
 
     // Subscribe to real-time messages
     const unsubscribe = subscribeToChannelMessages(channelId, (newMessage) => {
-      setMessages(prev => [...prev, newMessage])
+      setMessages(prev => {
+        // Prevent duplicates - check if message already exists
+        if (prev.some(msg => msg.id === newMessage.id)) {
+          return prev
+        }
+        return [...prev, newMessage]
+      })
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     })
 
@@ -61,8 +67,10 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       const newMessage = await sendChannelMessage(channelId, userId, message.trim())
       
       if (newMessage) {
-        // Message will be added via real-time subscription
+        // Add message immediately to UI (optimistic update)
+        setMessages(prev => [...prev, newMessage])
         setMessage('')
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
       }
     }
   }
