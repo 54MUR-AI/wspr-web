@@ -24,18 +24,23 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
+    console.log('WSPR: Setting up message listener')
+    
     // Listen for messages from RMG parent window
     const handleMessage = async (event: MessageEvent) => {
+      console.log('WSPR: Message received from origin:', event.origin, 'data:', event.data)
+      
       // Accept messages from RMG domains
-      const allowedOrigins = ['https://roninmediagroup.com', 'http://localhost:5173', 'http://localhost:3000']
+      const allowedOrigins = ['https://roninmediagroup.com', 'https://roninmedia.studio', 'http://localhost:5173', 'http://localhost:3000']
       if (!allowedOrigins.includes(event.origin)) {
+        console.log('WSPR: Message rejected - origin not allowed:', event.origin)
         return
       }
 
-      console.log('WSPR received message:', event.data)
+      console.log('WSPR: Message accepted, type:', event.data.type)
 
       if (event.data.type === 'RMG_TOGGLE_SETTINGS') {
-        console.log('Toggling settings modal')
+        console.log('WSPR: Toggling settings modal')
         setShowSettings(prev => !prev)
       } else if (event.data.type === 'RMG_AUTH_TOKEN' && event.data.authToken) {
         try {
