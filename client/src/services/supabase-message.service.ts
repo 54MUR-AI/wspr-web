@@ -246,6 +246,8 @@ export async function deleteMessage(
   userId: string
 ): Promise<boolean> {
   try {
+    console.log('🗑️ Attempting to delete message:', messageId, 'by user:', userId)
+    
     // Verify user is the author
     const { data: message, error: fetchError } = await supabase
       .from('wspr_messages')
@@ -254,29 +256,33 @@ export async function deleteMessage(
       .single()
 
     if (fetchError || !message) {
-      console.error('Error fetching message:', fetchError)
+      console.error('❌ Error fetching message for deletion:', fetchError)
       return false
     }
 
+    console.log('📝 Message author:', message.user_id, 'Current user:', userId)
+
     if (message.user_id !== userId) {
-      console.error('Only message author can delete')
+      console.error('❌ Only message author can delete')
       return false
     }
 
     // Delete message
-    const { error: deleteError } = await supabase
+    const { data: deleteData, error: deleteError } = await supabase
       .from('wspr_messages')
       .delete()
       .eq('id', messageId)
+      .select()
 
     if (deleteError) {
-      console.error('Error deleting message:', deleteError)
+      console.error('❌ Error deleting message from database:', deleteError)
       return false
     }
 
+    console.log('✅ Message deleted successfully from database:', deleteData)
     return true
   } catch (error) {
-    console.error('Delete message error:', error)
+    console.error('❌ Delete message error:', error)
     return false
   }
 }
