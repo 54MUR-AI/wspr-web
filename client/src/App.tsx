@@ -25,7 +25,7 @@ function App() {
 
   useEffect(() => {
     // Listen for messages from RMG parent window
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = async (event: MessageEvent) => {
       // Accept messages from RMG domains
       const allowedOrigins = ['https://roninmediagroup.com', 'http://localhost:5173', 'http://localhost:3000']
       if (!allowedOrigins.includes(event.origin)) {
@@ -103,18 +103,18 @@ function App() {
           setSelectedWorkspace(defaultWorkspace)
           
           // Get or create default channels
-          const channels = await getOrCreateDefaultChannels(defaultWorkspace.id, user.userId)
+          const channels = await getOrCreateDefaultChannels(defaultWorkspace.id, authenticatedUserId)
           if (channels.length > 0) {
             setSelectedChannel(channels[0].id)
           }
         }
         
         // Load all user workspaces
-        const userWorkspaces = await getUserWorkspaces(user.userId)
+        const userWorkspaces = await getUserWorkspaces(authenticatedUserId)
         setWorkspaces(userWorkspaces)
         
         // Connect to Socket.IO
-        socketService.connect(user.userId, user.email)
+        socketService.connect(authenticatedUserId, user.email)
         setIsConnected(true)
         
         setIsInitializing(false)
