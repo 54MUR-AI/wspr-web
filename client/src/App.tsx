@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import WorkspaceSidebar from './components/layout/WorkspaceSidebar'
 import ChannelList from './components/layout/ChannelList'
 import MessageThread from './components/layout/MessageThread'
+import SettingsModal from './components/settings/SettingsModal'
 import { authManager } from './utils/auth'
 import { socketService } from './services/socket'
 import { getOrCreateDefaultWorkspace, getUserWorkspaces } from './services/workspace.service'
@@ -19,8 +20,30 @@ function App() {
   const [userId, setUserId] = useState('')
   const [isConnected, setIsConnected] = useState(false)
   const [isInitializing, setIsInitializing] = useState(true)
+  const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
+    // Listen for messages from RMG parent window
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === 'RMG_TOGGLE_SETTINGS') {
+        setShowSettings(prev => !prev)
+      } else if (event.data.type === 'RMG_AUTH_TOKEN' && event.data.authToken) {
+        try {
+          const authData = JSON.parse(event.data.authToken)
+          if (authData.access_token) {
+            supabase.auth.setSession({
+              access_token: authData.access_token,
+              refresh_token: authData.refresh_token
+            })
+          }
+        } catch (e) {
+          console.error('Failed to set Supabase session:', e)
+        }
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+
     const initializeUser = async () => {
       const user = authManager.getUser()
       if (user) {
@@ -32,23 +55,6 @@ function App() {
         const { data: { session } } = await supabase.auth.getSession()
         
         if (!session) {
-          // Listen for auth token from RMG parent window
-          window.addEventListener('message', async (event) => {
-            if (event.data.type === 'RMG_AUTH_TOKEN' && event.data.authToken) {
-              try {
-                const authData = JSON.parse(event.data.authToken)
-                if (authData.access_token) {
-                  await supabase.auth.setSession({
-                    access_token: authData.access_token,
-                    refresh_token: authData.refresh_token
-                  })
-                }
-              } catch (e) {
-                console.error('Failed to set Supabase session:', e)
-              }
-            }
-          })
-          
           // Request auth token from parent
           window.parent.postMessage({ type: 'WSPR_REQUEST_AUTH' }, '*')
         }
@@ -80,11 +86,7 @@ function App() {
     initializeUser()
     
     return () => {
-      const user = authManager.getUser()
-      if (user) {
-        // Set status to offline on unmount
-        updateStatus(user.userId, 'offline')
-        socketService.disconnect()
+      window.removeEventListener('message', handleMessage)
       }
     }
   }, [])
