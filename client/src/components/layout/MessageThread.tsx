@@ -93,12 +93,12 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const handleEdit = async (messageId: string) => {
     if (!editingContent.trim() || !userId) return
 
-    const success = await editMessage(messageId, userId, editingContent)
-    if (success) {
-      // Update message in UI
+    const result = await editMessage(messageId, userId, editingContent)
+    if (result.success && result.encryptedContent) {
+      // Update message in UI with encrypted content
       setMessages(prev => prev.map(msg => 
         msg.id === messageId 
-          ? { ...msg, content: editingContent, edited_at: new Date().toISOString() }
+          ? { ...msg, content: result.encryptedContent!, edited_at: new Date().toISOString() }
           : msg
       ))
       setEditingMessageId(null)

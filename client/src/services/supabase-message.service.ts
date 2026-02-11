@@ -197,7 +197,7 @@ export async function editMessage(
   messageId: string,
   userId: string,
   newContent: string
-): Promise<boolean> {
+): Promise<{ success: boolean; encryptedContent?: string }> {
   try {
     // Verify user is the author
     const { data: message, error: fetchError } = await supabase
@@ -208,12 +208,12 @@ export async function editMessage(
 
     if (fetchError || !message) {
       console.error('Error fetching message:', fetchError)
-      return false
+      return { success: false }
     }
 
     if (message.user_id !== userId) {
       console.error('Only message author can edit')
-      return false
+      return { success: false }
     }
 
     // Encrypt and update message
@@ -228,13 +228,13 @@ export async function editMessage(
 
     if (updateError) {
       console.error('Error updating message:', updateError)
-      return false
+      return { success: false }
     }
 
-    return true
+    return { success: true, encryptedContent }
   } catch (error) {
     console.error('Edit message error:', error)
-    return false
+    return { success: false }
   }
 }
 
