@@ -7,7 +7,7 @@ import { socketService } from './services/socket'
 import { getOrCreateProfile, updateStatus } from './services/profile.service'
 import { getOrCreateDefaultWorkspace, getUserWorkspaces } from './services/workspace.service'
 import { getOrCreateDefaultChannels } from './services/channel.service'
-import { WsprWorkspace } from './lib/supabase'
+import { supabase, WsprWorkspace } from './lib/supabase'
 import './index.css'
 
 // WSPR v2.0 - Samurai Redesign
