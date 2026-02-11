@@ -2,7 +2,7 @@ import { Send, Paperclip, Smile, Hash, Menu } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { socketService, Message } from '../../services/socket'
 import { getChannelMessages, sendChannelMessage, subscribeToChannelMessages, decryptMessageContent } from '../../services/supabase-message.service'
-import { WsprMessage } from '../../lib/supabase'
+import { WsprMessage, supabase } from '../../lib/supabase'
 
 interface MessageThreadProps {
   channelId: string
