@@ -88,10 +88,19 @@ function App() {
 
         // Get display name from RMG auth metadata (source of truth)
         const displayName = session.user.user_metadata?.display_name || user.username || user.email?.split('@')[0] || 'Unknown'
+        
+        console.log('🔍 WSPR Profile Sync Debug:', {
+          sessionUserId: session.user.id,
+          sessionUserMetadata: session.user.user_metadata,
+          displayNameFromMetadata: session.user.user_metadata?.display_name,
+          urlUsername: user.username,
+          emailPrefix: user.email?.split('@')[0],
+          finalDisplayName: displayName
+        })
 
         // Sync RMG user data to wspr_profiles (for contacts to work)
         try {
-          await supabase
+          const { data: upsertData, error: upsertError } = await supabase
             .from('wspr_profiles')
             .upsert({
               id: authenticatedUserId,
@@ -100,7 +109,13 @@ function App() {
               status: 'online',
               updated_at: new Date().toISOString()
             }, { onConflict: 'id' })
-          console.log('Profile synced successfully with display name:', displayName)
+            .select()
+          
+          if (upsertError) {
+            console.error('❌ Profile sync error:', upsertError)
+          } else {
+            console.log('✅ Profile synced successfully:', upsertData)
+          }
         } catch (e) {
           console.error('Failed to sync profile:', e)
         }
