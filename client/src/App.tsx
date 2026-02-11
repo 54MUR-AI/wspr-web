@@ -41,10 +41,13 @@ function App() {
         try {
           const authData = JSON.parse(event.data.authToken)
           if (authData.access_token) {
-            supabase.auth.setSession({
+            await supabase.auth.setSession({
               access_token: authData.access_token,
               refresh_token: authData.refresh_token
             })
+            console.log('Supabase session set, reinitializing...')
+            // Reinitialize now that we have auth
+            initializeUser()
           }
         } catch (e) {
           console.error('Failed to set Supabase session:', e)
@@ -75,12 +78,15 @@ function App() {
 
         console.log('Supabase session authenticated:', session.user.id)
 
+        // Use the authenticated session user ID for all database operations
+        const authenticatedUserId = session.user.id
+
         // Sync RMG user data to wspr_profiles (for contacts to work)
         try {
           await supabase
             .from('wspr_profiles')
             .upsert({
-              id: user.userId,
+              id: authenticatedUserId,
               display_name: user.username,
               email: user.email,
               status: 'online',
@@ -92,7 +98,7 @@ function App() {
         }
         
         // Get or create default WSPR workspace
-        const defaultWorkspace = await getOrCreateDefaultWorkspace(user.userId)
+        const defaultWorkspace = await getOrCreateDefaultWorkspace(authenticatedUserId)
         if (defaultWorkspace) {
           setSelectedWorkspace(defaultWorkspace)
           
