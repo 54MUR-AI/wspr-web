@@ -61,6 +61,25 @@ export async function createChannel(
       await addChannelMember(data.id, userId)
     }
 
+    // Create LDGR subfolder for this channel
+    // Get workspace LDGR folder first
+    const { data: workspace } = await supabase
+      .from('wspr_workspaces')
+      .select('ldgr_folder_id')
+      .eq('id', workspaceId)
+      .single()
+
+    if (workspace?.ldgr_folder_id) {
+      // Send message to parent RMG to create channel subfolder
+      window.parent.postMessage({
+        type: 'WSPR_CREATE_CHANNEL_FOLDER',
+        channelId: data.id,
+        channelName: name,
+        workspaceFolderId: workspace.ldgr_folder_id,
+        ownerId: userId
+      }, '*')
+    }
+
     return data
   } catch (error) {
     console.error('Create channel error:', error)
