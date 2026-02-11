@@ -13,12 +13,11 @@ WHERE name = 'Public';
 -- Check who is a member of Public workspace
 SELECT 
   wm.user_id,
-  wm.role,
-  wm.created_at
+  wm.role
 FROM wspr_workspace_members wm
 INNER JOIN wspr_workspaces w ON wm.workspace_id = w.id
 WHERE w.name = 'Public'
-ORDER BY wm.created_at;
+ORDER BY wm.user_id;
 
 -- ============================================
 -- STEP 2: Add ALL authenticated users to Public workspace
