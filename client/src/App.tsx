@@ -105,7 +105,6 @@ function App() {
             .upsert({
               id: authenticatedUserId,
               display_name: displayName,
-              email: user.email,
               status: 'online',
               updated_at: new Date().toISOString()
             }, { onConflict: 'id' })
