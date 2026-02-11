@@ -63,13 +63,22 @@ export async function createChannel(
 
     // Create LDGR subfolder for this channel
     // Get workspace LDGR folder first
-    const { data: workspace } = await supabase
+    const { data: workspace, error: workspaceError } = await supabase
       .from('wspr_workspaces')
       .select('ldgr_folder_id')
       .eq('id', workspaceId)
       .single()
 
+    console.log('📁 Channel created, checking workspace folder:', { workspace, workspaceError })
+
     if (workspace?.ldgr_folder_id) {
+      console.log('📁 Sending channel folder creation message to RMG:', {
+        channelId: data.id,
+        channelName: name,
+        workspaceFolderId: workspace.ldgr_folder_id,
+        ownerId: userId
+      })
+      
       // Send message to parent RMG to create channel subfolder
       window.parent.postMessage({
         type: 'WSPR_CREATE_CHANNEL_FOLDER',
@@ -78,6 +87,8 @@ export async function createChannel(
         workspaceFolderId: workspace.ldgr_folder_id,
         ownerId: userId
       }, '*')
+    } else {
+      console.warn('⚠️ Workspace has no LDGR folder ID, cannot create channel subfolder')
     }
 
     return data
@@ -191,6 +202,63 @@ export async function hasChannelAccess(channelId: string, userId: string): Promi
     return !!channelMember
   } catch (error) {
     console.error('Channel access check error:', error)
+    return false
+  }
+}
+
+/**
+ * Delete channel and its LDGR subfolder
+ */
+export async function deleteChannel(channelId: string, userId: string): Promise<boolean> {
+  try {
+    // Get channel info with workspace owner
+    const { data: channel, error: channelError } = await supabase
+      .from('wspr_channels')
+      .select('ldgr_folder_id, created_by, workspace_id, wspr_workspaces!inner(owner_id)')
+      .eq('id', channelId)
+      .single()
+
+    if (channelError) {
+      console.error('Error fetching channel:', channelError)
+      return false
+    }
+
+    if (!channel) {
+      console.error('Channel not found')
+      return false
+    }
+
+    // Verify user is channel creator or workspace owner
+    const workspaceOwnerId = (channel.wspr_workspaces as any).owner_id
+    if (channel.created_by !== userId && workspaceOwnerId !== userId) {
+      console.error('Only channel creator or workspace owner can delete channel')
+      return false
+    }
+
+    // Send message to RMG to delete LDGR subfolder
+    if (channel.ldgr_folder_id) {
+      window.parent.postMessage({
+        type: 'WSPR_DELETE_LDGR_FOLDER',
+        folderId: channel.ldgr_folder_id,
+        channelId: channelId
+      }, '*')
+    }
+
+    // Delete channel (cascades to messages, members)
+    const { error: deleteError } = await supabase
+      .from('wspr_channels')
+      .delete()
+      .eq('id', channelId)
+
+    if (deleteError) {
+      console.error('Error deleting channel:', deleteError)
+      return false
+    }
+
+    console.log(`✅ Channel ${channelId} deleted`)
+    return true
+  } catch (error) {
+    console.error('Delete channel error:', error)
     return false
   }
 }

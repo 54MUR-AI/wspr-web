@@ -148,3 +148,59 @@ export async function getWorkspaceMembers(workspaceId: string) {
     return []
   }
 }
+
+/**
+ * Delete workspace and its LDGR folder
+ */
+export async function deleteWorkspace(workspaceId: string, userId: string): Promise<boolean> {
+  try {
+    // Get workspace info
+    const { data: workspace, error: workspaceError } = await supabase
+      .from('wspr_workspaces')
+      .select('ldgr_folder_id, owner_id')
+      .eq('id', workspaceId)
+      .single()
+
+    if (workspaceError) {
+      console.error('Error fetching workspace:', workspaceError)
+      return false
+    }
+
+    if (!workspace) {
+      console.error('Workspace not found')
+      return false
+    }
+
+    // Verify user is owner
+    if (workspace.owner_id !== userId) {
+      console.error('Only workspace owner can delete workspace')
+      return false
+    }
+
+    // Send message to RMG to delete LDGR folder
+    if (workspace.ldgr_folder_id) {
+      window.parent.postMessage({
+        type: 'WSPR_DELETE_LDGR_FOLDER',
+        folderId: workspace.ldgr_folder_id,
+        workspaceId: workspaceId
+      }, '*')
+    }
+
+    // Delete workspace (cascades to channels, members, messages)
+    const { error: deleteError } = await supabase
+      .from('wspr_workspaces')
+      .delete()
+      .eq('id', workspaceId)
+
+    if (deleteError) {
+      console.error('Error deleting workspace:', deleteError)
+      return false
+    }
+
+    console.log(`✅ Workspace ${workspaceId} deleted`)
+    return true
+  } catch (error) {
+    console.error('Delete workspace error:', error)
+    return false
+  }
+}
