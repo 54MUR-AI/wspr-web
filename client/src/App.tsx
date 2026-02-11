@@ -66,9 +66,14 @@ function App() {
         const { data: { session } } = await supabase.auth.getSession()
         
         if (!session) {
-          // Request auth token from parent
+          // Request auth token from parent and wait for it
           window.parent.postMessage({ type: 'WSPR_REQUEST_AUTH' }, '*')
+          console.log('Waiting for Supabase auth session...')
+          setIsInitializing(false)
+          return
         }
+
+        console.log('Supabase session authenticated:', session.user.id)
 
         // Sync RMG user data to wspr_profiles (for contacts to work)
         try {
@@ -81,6 +86,7 @@ function App() {
               status: 'online',
               updated_at: new Date().toISOString()
             }, { onConflict: 'id' })
+          console.log('Profile synced successfully')
         } catch (e) {
           console.error('Failed to sync profile:', e)
         }
