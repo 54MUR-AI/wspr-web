@@ -152,11 +152,18 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
       {/* Find Contacts Modal */}
       <FindContactsModal 
         isOpen={showFindContacts}
-        onClose={() => {
-          setShowFindContacts(false)
-          loadContacts() // Reload contacts after closing modal
-        }}
-        currentUserId={userId}
+        onClose={() => setShowFindContacts(false)}
+        userId={userId}
+        onContactAdded={loadContacts}
+      />
+
+      {/* Create Channel Modal */}
+      <CreateChannelModal 
+        isOpen={showCreateChannel}
+        onClose={() => setShowCreateChannel(false)}
+        workspaceId={workspaceId}
+        userId={userId}
+        onChannelCreated={loadChannels}
       />
     </div>
   )
