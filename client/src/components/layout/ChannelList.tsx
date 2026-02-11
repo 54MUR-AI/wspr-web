@@ -104,11 +104,12 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
               <span className="text-sm font-semibold">Direct Messages</span>
             </div>
             <UserPlus 
-              className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" 
+              className="w-4 h-4 text-samurai-red hover:text-samurai-red-dark transition-colors cursor-pointer" 
               onClick={(e) => {
                 e.stopPropagation()
                 setShowFindContacts(true)
               }}
+              title="Find Contacts"
             />
           </button>
 
