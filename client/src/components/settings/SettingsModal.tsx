@@ -1,35 +1,30 @@
-import { X, User, Bell, Lock, Palette, Database } from 'lucide-react'
-import { useState } from 'react'
+import { X } from 'lucide-react'
 
 interface SettingsModalProps {
   isOpen: boolean
   onClose: () => void
   userEmail?: string
-  userId?: string
 }
 
-export default function SettingsModal({ isOpen, onClose, userEmail, userId }: SettingsModalProps) {
-  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'privacy' | 'appearance' | 'data'>('profile')
-
+export default function SettingsModal({ isOpen, onClose, userEmail }: SettingsModalProps) {
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-samurai-black-lighter border border-samurai-grey-dark rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-samurai-grey-darker border border-samurai-grey-dark rounded-lg w-full max-w-md">
         {/* Header */}
         <div className="p-6 border-b border-samurai-grey-dark flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white">Settings</h2>
+          <h2 className="text-xl font-bold text-white">Settings</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
+            className="p-2 hover:bg-samurai-grey-dark rounded-lg transition-colors"
           >
-            <X className="w-6 h-6 text-samurai-steel hover:text-white" />
+            <X className="w-5 h-5 text-samurai-steel hover:text-white" />
           </button>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
-          <div className="w-64 border-r border-samurai-grey-dark p-4 space-y-2">
+        {/* Content */}
+        <div className="p-6 space-y-4">
             <button
               onClick={() => setActiveTab('profile')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
