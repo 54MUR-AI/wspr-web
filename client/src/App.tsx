@@ -87,7 +87,6 @@ function App() {
     
     return () => {
       window.removeEventListener('message', handleMessage)
-      }
     }
   }, [])
 
@@ -154,9 +153,16 @@ function App() {
       {/* Main Content - Messages - Full width on mobile */}
       <MessageThread 
         channelId={selectedChannel}
-        userEmail={userEmail}
         userId={userId}
+        userEmail={userEmail}
         isConnected={isConnected}
+      />
+
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        userEmail={userEmail}
       />
     </div>
   )
