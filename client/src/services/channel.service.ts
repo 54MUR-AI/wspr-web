@@ -39,6 +39,15 @@ export async function createChannel(
       return null
     }
 
+    // Check if user has permission to create channels in this workspace
+    const { canManageChannels } = await import('./permissions.service')
+    const hasPermission = await canManageChannels(userId, workspaceId)
+    
+    if (!hasPermission) {
+      console.error('User does not have permission to create channels in this workspace')
+      return null
+    }
+
     const { data, error } = await supabase
       .from('wspr_channels')
       .insert({
@@ -211,25 +220,34 @@ export async function hasChannelAccess(channelId: string, userId: string): Promi
  */
 export async function deleteChannel(channelId: string, userId: string): Promise<boolean> {
   try {
-    // Get channel info with workspace owner
+    // Get channel info with workspace
     const { data: channel, error: channelError } = await supabase
       .from('wspr_channels')
-      .select('ldgr_folder_id, created_by, workspace_id, wspr_workspaces!inner(owner_id)')
+      .select(`
+        id,
+        name,
+        ldgr_folder_id,
+        workspace:wspr_workspaces(id, owner_id, name)
+      `)
       .eq('id', channelId)
       .single()
 
-    if (channelError) {
+    if (channelError || !channel) {
       console.error('Error fetching channel:', channelError)
       return false
     }
 
-    if (!channel) {
-      console.error('Channel not found')
+    // Check if user has permission to delete channels in this workspace
+    const { canManageChannels } = await import('./permissions.service')
+    const hasPermission = await canManageChannels(userId, (channel.workspace as any)?.id)
+    
+    if (!hasPermission) {
+      console.error('User does not have permission to delete channels in this workspace')
       return false
     }
 
     // Verify user is channel creator or workspace owner
-    const workspaceOwnerId = (channel.wspr_workspaces as any).owner_id
+    const workspaceOwnerId = (channel.workspace as any).owner_id
     if (channel.created_by !== userId && workspaceOwnerId !== userId) {
       console.error('Only channel creator or workspace owner can delete channel')
       return false

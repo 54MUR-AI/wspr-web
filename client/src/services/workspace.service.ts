@@ -92,20 +92,43 @@ export async function createWorkspace(
 }
 
 /**
- * Get or create default "WSPR" workspace
+ * Get or create default "Public" workspace
  */
 export async function getOrCreateDefaultWorkspace(userId: string): Promise<WsprWorkspace | null> {
   try {
-    // Check if user already has WSPR workspace
-    const workspaces = await getUserWorkspaces(userId)
-    const wsprWorkspace = workspaces.find(w => w.name === 'WSPR')
+    // Check if Public workspace exists (shared workspace for all users)
+    const { data: publicWorkspace } = await supabase
+      .from('wspr_workspaces')
+      .select('*')
+      .eq('name', 'Public')
+      .eq('is_public', true)
+      .single()
     
-    if (wsprWorkspace) {
-      return wsprWorkspace
+    if (publicWorkspace) {
+      // Ensure user is a member of Public workspace
+      const { data: membership } = await supabase
+        .from('wspr_workspace_members')
+        .select('id')
+        .eq('workspace_id', publicWorkspace.id)
+        .eq('user_id', userId)
+        .single()
+      
+      if (!membership) {
+        // Add user as member of Public workspace
+        await supabase
+          .from('wspr_workspace_members')
+          .insert({
+            workspace_id: publicWorkspace.id,
+            user_id: userId,
+            role: 'member'
+          })
+      }
+      
+      return publicWorkspace
     }
 
-    // Create default WSPR workspace
-    return await createWorkspace(userId, 'WSPR', 'Your personal WSPR workspace', false)
+    // Create Public workspace (first user becomes owner)
+    return await createWorkspace(userId, 'Public', 'Shared workspace for all users', true)
   } catch (error) {
     console.error('Get/create default workspace error:', error)
     return null
@@ -171,10 +194,19 @@ export async function getWorkspaceMembers(workspaceId: string) {
  */
 export async function deleteWorkspace(workspaceId: string, userId: string): Promise<boolean> {
   try {
+    // Check if user has permission to delete this workspace
+    const { canDeleteWorkspace } = await import('./permissions.service')
+    const hasPermission = await canDeleteWorkspace(userId, workspaceId)
+    
+    if (!hasPermission) {
+      console.error('User does not have permission to delete this workspace')
+      return false
+    }
+
     // Get workspace info
     const { data: workspace, error: workspaceError } = await supabase
       .from('wspr_workspaces')
-      .select('ldgr_folder_id, owner_id')
+      .select('ldgr_folder_id, owner_id, name')
       .eq('id', workspaceId)
       .single()
 
@@ -185,12 +217,6 @@ export async function deleteWorkspace(workspaceId: string, userId: string): Prom
 
     if (!workspace) {
       console.error('Workspace not found')
-      return false
-    }
-
-    // Verify user is owner
-    if (workspace.owner_id !== userId) {
-      console.error('Only workspace owner can delete workspace')
       return false
     }
 
