@@ -23,7 +23,21 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   useEffect(() => {
     if (!channelId || !userId) {
       setIsLoading(false)
+      setChannelName('')
       return
+    }
+
+    // Fetch channel name
+    const fetchChannelName = async () => {
+      const { data } = await supabase
+        .from('wspr_channels')
+        .select('name')
+        .eq('id', channelId)
+        .single()
+      
+      if (data) {
+        setChannelName(data.name)
+      }
     }
 
     // Load message history from Supabase
@@ -37,6 +51,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     }
 
+    fetchChannelName()
     loadMessages()
 
     // Subscribe to real-time messages

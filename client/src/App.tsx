@@ -194,6 +194,7 @@ function App() {
           onChannelSelect={setSelectedChannel}
           workspaceId={selectedWorkspace?.id || ''}
           userId={userId}
+          workspaceName={selectedWorkspace?.name}
         />
       </div>
 

@@ -11,9 +11,10 @@ interface ChannelListProps {
   onChannelSelect: (channel: string) => void
   workspaceId: string
   userId: string
+  workspaceName?: string
 }
 
-export default function ChannelList({ selectedChannel, onChannelSelect, workspaceId, userId }: ChannelListProps) {
+export default function ChannelList({ selectedChannel, onChannelSelect, workspaceId, userId, workspaceName }: ChannelListProps) {
   const [channelsExpanded, setChannelsExpanded] = useState(true)
   const [dmsExpanded, setDmsExpanded] = useState(true)
   const [channels, setChannels] = useState<WsprChannel[]>([])
@@ -71,7 +72,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
       {/* Workspace Header */}
       <div className="p-4 border-b border-samurai-grey-dark">
         <h2 className="text-xl font-bold text-white mb-2">
-          WSPR
+          {workspaceName || 'WSPR'}
         </h2>
         <div className="relative">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-samurai-steel" />
@@ -119,7 +120,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
                     {channel.is_private ? <Lock className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
                     <span className="flex-1 text-left">{channel.name}</span>
                     <Trash2 
-                      className="w-3 h-3 opacity-0 group-hover:opacity-100 text-samurai-steel hover:text-samurai-red transition-all cursor-pointer"
+                      className="w-3.5 h-3.5 opacity-40 hover:opacity-100 text-samurai-steel hover:text-samurai-red transition-all cursor-pointer flex-shrink-0"
                       onClick={(e) => handleDeleteChannel(channel.id, e)}
                     />
                   </button>
