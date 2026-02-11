@@ -70,6 +70,27 @@ export default function InviteToWorkspaceModal({ isOpen, onClose, workspaceId, w
         return
       }
 
+      // Grant read access to workspace LDGR folder
+      const { data: workspace } = await supabase
+        .from('wspr_workspaces')
+        .select('ldgr_folder_id')
+        .eq('id', workspaceId)
+        .single()
+
+      if (workspace?.ldgr_folder_id) {
+        const { error: accessError } = await supabase
+          .from('folder_access')
+          .insert({
+            folder_id: workspace.ldgr_folder_id,
+            user_id: users.user_id,
+            access_level: 'read'
+          })
+
+        if (accessError && accessError.code !== '23505') {
+          console.error('Error granting folder access:', accessError)
+        }
+      }
+
       setSuccess(`Successfully invited ${email} to ${workspaceName}!`)
       setEmail('')
       
