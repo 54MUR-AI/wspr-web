@@ -66,19 +66,23 @@ export async function createWorkspace(
       return null
     }
 
-    // Request LDGR folder creation from RMG
-    console.log('📁 Sending workspace folder creation request to RMG:', {
-      workspaceId: workspace.id,
-      workspaceName: name,
-      ownerId: userId
-    })
-    
-    window.parent.postMessage({
-      type: 'WSPR_CREATE_LDGR_FOLDER',
-      workspaceId: workspace.id,
-      workspaceName: name,
-      ownerId: userId
-    }, '*')
+    // Request LDGR folder creation from RMG (only if not already created)
+    if (!workspace.ldgr_folder_id) {
+      console.log('📁 Sending workspace folder creation request to RMG:', {
+        workspaceId: workspace.id,
+        workspaceName: name,
+        ownerId: userId
+      })
+      
+      window.parent.postMessage({
+        type: 'WSPR_CREATE_LDGR_FOLDER',
+        workspaceId: workspace.id,
+        workspaceName: name,
+        ownerId: userId
+      }, '*')
+    } else {
+      console.log('📁 Workspace already has LDGR folder:', workspace.ldgr_folder_id)
+    }
 
     return workspace
   } catch (error) {
