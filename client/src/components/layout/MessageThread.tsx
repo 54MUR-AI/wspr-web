@@ -8,10 +8,11 @@ interface MessageThreadProps {
   channelId: string
   userEmail?: string
   userId?: string
+  username?: string
   isConnected?: boolean
 }
 
-export default function MessageThread({ channelId, userEmail, userId, isConnected }: MessageThreadProps) {
+export default function MessageThread({ channelId, userEmail, userId, username, isConnected }: MessageThreadProps) {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<WsprMessage[]>([])
   const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -100,9 +101,9 @@ export default function MessageThread({ channelId, userEmail, userId, isConnecte
           <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
         </div>
         
-        {userEmail && (
+        {username && (
           <div className="hidden md:block text-sm text-samurai-steel mr-4">
-            <span className="text-samurai-red">{userEmail.split('@')[0]}</span>
+            <span className="text-samurai-red">{username}</span>
           </div>
         )}
       </div>
