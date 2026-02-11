@@ -48,50 +48,23 @@ WHERE w.name = 'Public'
 AND wm.user_id = auth.uid();
 
 -- ============================================
--- STEP 4: Test the INSERT policy conditions
+-- STEP 4: Show all users and their Public workspace membership
 -- ============================================
 
--- Test if the policy condition would pass for a specific channel
--- Replace 'CHANNEL_ID_HERE' with an actual channel ID from step 2
-DO $$
-DECLARE
-  test_channel_id uuid;
-  test_user_id uuid;
-  is_member boolean;
-  is_public_channel boolean;
-BEGIN
-  -- Get current user
-  test_user_id := auth.uid();
-  
-  -- Get first Public channel
-  SELECT id INTO test_channel_id
-  FROM wspr_channels c
-  INNER JOIN wspr_workspaces w ON c.workspace_id = w.id
-  WHERE w.name = 'Public'
-  LIMIT 1;
-  
-  -- Test membership condition
-  SELECT EXISTS (
-    SELECT 1 FROM wspr_channels
-    INNER JOIN wspr_workspace_members ON wspr_channels.workspace_id = wspr_workspace_members.workspace_id
-    WHERE wspr_channels.id = test_channel_id
-    AND wspr_workspace_members.user_id = test_user_id
-  ) INTO is_member;
-  
-  -- Test Public workspace condition
-  SELECT EXISTS (
-    SELECT 1 FROM wspr_channels
-    INNER JOIN wspr_workspaces ON wspr_channels.workspace_id = wspr_workspaces.id
-    WHERE wspr_channels.id = test_channel_id
-    AND wspr_workspaces.name = 'Public'
-  ) INTO is_public_channel;
-  
-  RAISE NOTICE 'User ID: %', test_user_id;
-  RAISE NOTICE 'Channel ID: %', test_channel_id;
-  RAISE NOTICE 'Is member of workspace: %', is_member;
-  RAISE NOTICE 'Is Public channel: %', is_public_channel;
-  RAISE NOTICE 'Policy should allow: %', (is_member OR is_public_channel);
-END $$;
+-- Show all users and whether they're members of Public workspace
+SELECT 
+  'All users and Public membership:' as info,
+  u.id as user_id,
+  u.email,
+  CASE 
+    WHEN wm.user_id IS NOT NULL THEN 'YES - Member'
+    ELSE 'NO - Not a member'
+  END as is_public_member,
+  wm.role
+FROM auth.users u
+LEFT JOIN wspr_workspace_members wm ON u.id = wm.user_id
+  AND wm.workspace_id = (SELECT id FROM wspr_workspaces WHERE name = 'Public' LIMIT 1)
+ORDER BY u.email;
 
 -- ============================================
 -- STEP 5: Check current message policies
