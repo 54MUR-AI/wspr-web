@@ -4,7 +4,6 @@ import ChannelList from './components/layout/ChannelList'
 import MessageThread from './components/layout/MessageThread'
 import { authManager } from './utils/auth'
 import { socketService } from './services/socket'
-import { getOrCreateProfile, updateStatus } from './services/profile.service'
 import { getOrCreateDefaultWorkspace, getUserWorkspaces } from './services/workspace.service'
 import { getOrCreateDefaultChannels } from './services/channel.service'
 import { supabase, WsprWorkspace } from './lib/supabase'
@@ -53,12 +52,6 @@ function App() {
           // Request auth token from parent
           window.parent.postMessage({ type: 'WSPR_REQUEST_AUTH' }, '*')
         }
-        
-        // Initialize user profile in Supabase
-        await getOrCreateProfile(user.userId, user.email)
-        
-        // Set user status to online
-        await updateStatus(user.userId, 'online')
         
         // Get or create default WSPR workspace
         const defaultWorkspace = await getOrCreateDefaultWorkspace(user.userId)
@@ -143,7 +136,6 @@ function App() {
           }}
           workspaces={workspaces}
           userId={userId}
-          userEmail={userEmail}
         />
       </div>
 
