@@ -1,18 +1,14 @@
-import { Settings, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import { WsprWorkspace } from '../../lib/supabase'
-import SettingsModal from '../settings/SettingsModal'
 
 interface WorkspaceSidebarProps {
   selectedWorkspace: string
   onWorkspaceChange: (workspace: string) => void
   workspaces: WsprWorkspace[]
   userId: string
-  userEmail?: string
 }
 
-export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange, workspaces, userId, userEmail }: WorkspaceSidebarProps) {
-  const [showSettings, setShowSettings] = useState(false)
+export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange, workspaces, userId }: WorkspaceSidebarProps) {
   
   const getWorkspaceInitials = (name: string) => {
     return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -43,23 +39,6 @@ export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange,
 
       {/* Spacer */}
       <div className="flex-1" />
-
-      {/* Settings */}
-      <button 
-        onClick={() => setShowSettings(true)}
-        className="w-12 h-12 rounded-xl bg-samurai-red text-white hover:bg-samurai-red-dark shadow-lg shadow-samurai-red/50 transition-all duration-300 flex items-center justify-center group animate-glow-pulse"
-        title="Settings"
-      >
-        <Settings className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
-      </button>
-
-      {/* Settings Modal */}
-      <SettingsModal 
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        userEmail={userEmail}
-        userId={userId}
-      />
     </div>
   )
 }
