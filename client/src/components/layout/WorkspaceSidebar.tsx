@@ -1,14 +1,18 @@
 import { Plus } from 'lucide-react'
+import { useState } from 'react'
 import { WsprWorkspace } from '../../lib/supabase'
+import CreateWorkspaceModal from '../workspaces/CreateWorkspaceModal'
 
 interface WorkspaceSidebarProps {
   selectedWorkspace: string
   onWorkspaceChange: (workspace: string) => void
   workspaces: WsprWorkspace[]
   userId: string
+  onWorkspacesUpdate: () => void
 }
 
-export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange, workspaces, userId }: WorkspaceSidebarProps) {
+export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange, workspaces, userId, onWorkspacesUpdate }: WorkspaceSidebarProps) {
+  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false)
   
   const getWorkspaceInitials = (name: string) => {
     return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -33,12 +37,24 @@ export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange,
       ))}
 
       {/* Add Workspace */}
-      <button className="w-12 h-12 rounded-xl bg-samurai-grey-darker text-samurai-steel hover:bg-samurai-red hover:text-white transition-all duration-300 flex items-center justify-center group">
+      <button 
+        onClick={() => setShowCreateWorkspace(true)}
+        className="w-12 h-12 rounded-xl bg-samurai-grey-darker text-samurai-steel hover:bg-samurai-red hover:text-white transition-all duration-300 flex items-center justify-center group"
+        title="Create Workspace"
+      >
         <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
       </button>
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      {/* Create Workspace Modal */}
+      <CreateWorkspaceModal 
+        isOpen={showCreateWorkspace}
+        onClose={() => setShowCreateWorkspace(false)}
+        userId={userId}
+        onWorkspaceCreated={onWorkspacesUpdate}
+      />
     </div>
   )
 }
