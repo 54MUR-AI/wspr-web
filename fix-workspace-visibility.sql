@@ -1,6 +1,9 @@
 -- Fix workspace visibility issues
 -- Users should only see workspaces they are members of
 
+-- Enable RLS on wspr_workspaces if not already enabled
+ALTER TABLE wspr_workspaces ENABLE ROW LEVEL SECURITY;
+
 -- Drop existing policies
 DROP POLICY IF EXISTS "Users can view their workspaces" ON wspr_workspaces;
 DROP POLICY IF EXISTS "Users can create workspaces" ON wspr_workspaces;

@@ -1,7 +1,8 @@
-import { Plus, Trash2, MessageSquare } from 'lucide-react'
+import { Plus, Trash2, MessageSquare, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import { WsprWorkspace } from '../../lib/supabase'
 import CreateWorkspaceModal from '../workspaces/CreateWorkspaceModal'
+import InviteToWorkspaceModal from '../workspaces/InviteToWorkspaceModal'
 import { deleteWorkspace } from '../../services/workspace.service'
 
 interface WorkspaceSidebarProps {
@@ -15,6 +16,7 @@ interface WorkspaceSidebarProps {
 export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange, workspaces, userId, onWorkspacesUpdate }: WorkspaceSidebarProps) {
   const [showCreateWorkspace, setShowCreateWorkspace] = useState(false)
   const [deletingWorkspace, setDeletingWorkspace] = useState<string | null>(null)
+  const [invitingWorkspace, setInvitingWorkspace] = useState<{ id: string; name: string } | null>(null)
   
   const getWorkspaceInitials = (name: string) => {
     return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
@@ -72,12 +74,30 @@ export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange,
           >
             {getWorkspaceInitials(workspace.name)}
           </button>
-          <button
-            onClick={(e) => handleDeleteWorkspace(workspace.id, workspace.name, e)}
-            className="absolute -top-1 -right-1 w-5 h-5 bg-samurai-black border border-samurai-red rounded-full flex items-center justify-center opacity-50 hover:opacity-100 transition-opacity z-10"
-          >
-            <Trash2 className="w-3 h-3 text-samurai-red" />
-          </button>
+          {/* Action buttons - show on hover */}
+          <div className="absolute -top-1 -right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            {workspace.owner_id === userId && workspace.name !== 'Public' && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setInvitingWorkspace({ id: workspace.id, name: workspace.name })
+                  }}
+                  className="w-5 h-5 bg-samurai-black border border-samurai-steel rounded-full flex items-center justify-center hover:border-samurai-red transition-colors"
+                  title="Invite users"
+                >
+                  <UserPlus className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                </button>
+                <button
+                  onClick={(e) => handleDeleteWorkspace(workspace.id, workspace.name, e)}
+                  className="w-5 h-5 bg-samurai-black border border-samurai-red rounded-full flex items-center justify-center hover:bg-samurai-red transition-colors"
+                  title="Delete workspace"
+                >
+                  <Trash2 className="w-3 h-3 text-samurai-red" />
+                </button>
+              </>
+            )}
+          </div>
         </div>
       ))}
 
@@ -100,6 +120,16 @@ export default function WorkspaceSidebar({ selectedWorkspace, onWorkspaceChange,
         userId={userId}
         onWorkspaceCreated={onWorkspacesUpdate}
       />
+
+      {/* Invite to Workspace Modal */}
+      {invitingWorkspace && (
+        <InviteToWorkspaceModal
+          isOpen={true}
+          onClose={() => setInvitingWorkspace(null)}
+          workspaceId={invitingWorkspace.id}
+          workspaceName={invitingWorkspace.name}
+        />
+      )}
     </div>
   )
 }
