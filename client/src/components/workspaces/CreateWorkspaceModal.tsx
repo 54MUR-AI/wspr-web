@@ -22,11 +22,15 @@ export default function CreateWorkspaceModal({ isOpen, onClose, userId, onWorksp
     setIsCreating(true)
     try {
       const workspace = await createWorkspace(
-        workspaceName,
         userId,
+        workspaceName,
         description || undefined,
         false // isPublic
       )
+
+      if (!workspace) {
+        throw new Error('Failed to create workspace')
+      }
 
       // Create LDGR folder for this workspace
       // Send message to parent RMG to create LDGR folder
