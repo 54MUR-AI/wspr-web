@@ -34,6 +34,11 @@ export async function createChannel(
   isPrivate: boolean = false
 ): Promise<WsprChannel | null> {
   try {
+    if (!name || !name.trim()) {
+      console.error('Channel name is required')
+      return null
+    }
+
     const { data, error } = await supabase
       .from('wspr_channels')
       .insert({
