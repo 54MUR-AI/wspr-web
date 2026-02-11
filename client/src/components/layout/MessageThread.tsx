@@ -2,8 +2,11 @@ import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { socketService, Message } from '../../services/socket'
 import { getChannelMessages, sendChannelMessage, subscribeToChannelMessages, decryptMessageContent, editMessage, deleteMessage } from '../../services/supabase-message.service'
+import { addAttachment, getMessageAttachments, deleteAttachment, downloadAttachment, Attachment } from '../../services/attachment.service'
 import { supabase } from '../../lib/supabase'
 import type { WsprMessage } from '../../lib/supabase'
+import AttachmentModal from '../attachments/AttachmentModal'
+import AttachmentCard from '../attachments/AttachmentCard'
 
 interface MessageThreadProps {
   channelId: string
@@ -22,6 +25,9 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [channelName, setChannelName] = useState('')
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editingContent, setEditingContent] = useState('')
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false)
+  const [messageAttachments, setMessageAttachments] = useState<Map<string, Attachment[]>>(new Map())
+  const [pendingAttachments, setPendingAttachments] = useState<Array<{ ldgr_file_id: string; filename: string; file_size: number; mime_type: string }>>([])
 
   useEffect(() => {
     if (!channelId || !userId) {
@@ -48,6 +54,17 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       setIsLoading(true)
       const messageHistory = await getChannelMessages(channelId, 50)
       setMessages(messageHistory)
+      
+      // Load attachments for all messages
+      const attachmentsMap = new Map<string, Attachment[]>()
+      for (const msg of messageHistory) {
+        const attachments = await getMessageAttachments(msg.id)
+        if (attachments.length > 0) {
+          attachmentsMap.set(msg.id, attachments)
+        }
+      }
+      setMessageAttachments(attachmentsMap)
+      
       setIsLoading(false)
       
       // Scroll to bottom after loading
@@ -84,9 +101,46 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
 
     const newMessage = await sendChannelMessage(channelId, userId, message)
     if (newMessage) {
+      // Add attachments if any
+      if (pendingAttachments.length > 0) {
+        for (const attachment of pendingAttachments) {
+          await addAttachment(
+            newMessage.id,
+            attachment.ldgr_file_id,
+            attachment.filename,
+            attachment.file_size,
+            attachment.mime_type,
+            userId
+          )
+        }
+        // Fetch attachments for the new message
+        const attachments = await getMessageAttachments(newMessage.id)
+        setMessageAttachments(prev => new Map(prev).set(newMessage.id, attachments))
+        setPendingAttachments([])
+      }
+      
       // Optimistically add message to UI
       setMessages(prev => [...prev, newMessage])
       setMessage('')
+    }
+  }
+
+  const handleAttachFile = (file: { ldgr_file_id: string; filename: string; file_size: number; mime_type: string }) => {
+    setPendingAttachments(prev => [...prev, file])
+  }
+
+  const handleRemovePendingAttachment = (index: number) => {
+    setPendingAttachments(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleDeleteAttachment = async (attachmentId: string, messageId: string) => {
+    if (!userId || !confirm('Delete this attachment?')) return
+
+    const success = await deleteAttachment(attachmentId, userId)
+    if (success) {
+      // Update attachments map
+      const attachments = await getMessageAttachments(messageId)
+      setMessageAttachments(prev => new Map(prev).set(messageId, attachments))
     }
   }
 
@@ -232,24 +286,40 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                         </button>
                       </div>
                     ) : (
-                      <div className="flex items-start gap-2">
-                        <p className="text-samurai-steel-light break-words flex-1">{decryptedContent}</p>
-                        {isAuthor && (
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => startEdit(msg)}
-                              className="p-1 hover:bg-samurai-grey-darker rounded"
-                              title="Edit message"
-                            >
-                              <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(msg.id)}
-                              className="p-1 hover:bg-samurai-grey-darker rounded"
-                              title="Delete message"
-                            >
-                              <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
-                            </button>
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <p className="text-samurai-steel-light break-words flex-1">{decryptedContent}</p>
+                          {isAuthor && (
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => startEdit(msg)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Edit message"
+                              >
+                                <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(msg.id)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Delete message"
+                              >
+                                <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {/* Attachments */}
+                        {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (
+                          <div className="space-y-2 mt-2">
+                            {messageAttachments.get(msg.id)!.map(attachment => (
+                              <AttachmentCard
+                                key={attachment.id}
+                                attachment={attachment}
+                                onDownload={downloadAttachment}
+                                onDelete={(id) => handleDeleteAttachment(id, msg.id)}
+                                canDelete={isAuthor}
+                              />
+                            ))}
                           </div>
                         )}
                       </div>
@@ -266,8 +336,28 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       {/* Message Input */}
       <div className="p-3 sm:p-4 border-t border-samurai-grey-dark">
         <div className="glass-card rounded-xl p-2 sm:p-3">
+          {/* Pending Attachments */}
+          {pendingAttachments.length > 0 && (
+            <div className="mb-2 space-y-2">
+              {pendingAttachments.map((attachment, index) => (
+                <div key={index} className="glass-card p-2 rounded flex items-center gap-2">
+                  <span className="text-sm text-white truncate flex-1">{attachment.filename}</span>
+                  <button
+                    onClick={() => handleRemovePendingAttachment(index)}
+                    className="text-samurai-red hover:text-samurai-red-dark"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-1 sm:gap-2">
-            <button className="hidden sm:block p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors">
+            <button 
+              onClick={() => setShowAttachmentModal(true)}
+              className="hidden sm:block p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
+              disabled={!channelId}
+            >
               <Paperclip className="w-5 h-5 text-samurai-steel hover:text-white transition-colors" />
             </button>
             <input
@@ -293,6 +383,14 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
           </div>
         </div>
       </div>
+
+      {/* Attachment Modal */}
+      <AttachmentModal
+        isOpen={showAttachmentModal}
+        onClose={() => setShowAttachmentModal(false)}
+        onAttachFile={handleAttachFile}
+        userId={userId || ''}
+      />
     </div>
   )
 }
