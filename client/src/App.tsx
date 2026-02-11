@@ -194,7 +194,10 @@ function App() {
           selectedWorkspace={selectedWorkspace?.id || ''}
           onWorkspaceChange={(workspaceId) => {
             const workspace = workspaces.find(w => w.id === workspaceId)
-            if (workspace) setSelectedWorkspace(workspace)
+            if (workspace) {
+              setSelectedWorkspace(workspace)
+              setSelectedChannel('') // Clear channel when switching workspaces
+            }
           }}
           workspaces={workspaces}
           userId={userId}
