@@ -6,9 +6,10 @@ interface AttachmentModalProps {
   onClose: () => void
   onAttachFile: (file: { ldgr_file_id: string; filename: string; file_size: number; mime_type: string }) => void
   userId: string
+  channelFolderId?: string | null
 }
 
-export default function AttachmentModal({ isOpen, onClose, onAttachFile, userId }: AttachmentModalProps) {
+export default function AttachmentModal({ isOpen, onClose, onAttachFile, userId, channelFolderId }: AttachmentModalProps) {
   const [activeTab, setActiveTab] = useState<'ldgr' | 'upload'>('ldgr')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
@@ -35,7 +36,8 @@ export default function AttachmentModal({ isOpen, onClose, onAttachFile, userId 
         size: selectedFile.size,
         type: selectedFile.type
       },
-      userId: userId
+      userId: userId,
+      channelFolderId: channelFolderId
     }, '*')
 
     // Listen for response
