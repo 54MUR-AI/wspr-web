@@ -18,6 +18,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userEmail, setUserEmail] = useState('')
   const [userId, setUserId] = useState('')
+  const [username, setUsername] = useState('')
   const [isConnected, setIsConnected] = useState(false)
   const [isInitializing, setIsInitializing] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
@@ -59,6 +60,7 @@ function App() {
         setIsAuthenticated(true)
         setUserEmail(user.email)
         setUserId(user.userId)
+        setUsername(user.username)
         
         // Check if we have a Supabase session, if not try to get one from RMG
         const { data: { session } } = await supabase.auth.getSession()
@@ -146,6 +148,10 @@ function App() {
           }}
           workspaces={workspaces}
           userId={userId}
+          onWorkspacesUpdate={async () => {
+            const userWorkspaces = await getUserWorkspaces(userId)
+            setWorkspaces(userWorkspaces)
+          }}
         />
       </div>
 
@@ -164,6 +170,7 @@ function App() {
         channelId={selectedChannel}
         userId={userId}
         userEmail={userEmail}
+        username={username}
         isConnected={isConnected}
       />
 

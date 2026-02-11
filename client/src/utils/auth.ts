@@ -1,60 +1,56 @@
 // RMG Auth Integration for WSPR
 // Receives user credentials from parent RMG site via URL params
 
-export interface RMGUser {
-  userId: string
-  email: string
-}
-
 export class AuthManager {
-  private static instance: AuthManager
-  private user: RMGUser | null = null
+  private userId: string | null = null
+  private email: string | null = null
+  private username: string | null = null
 
-  private constructor() {
-    this.initializeFromURL()
+  constructor() {
+    this.initFromUrl()
   }
 
-  static getInstance(): AuthManager {
-    if (!AuthManager.instance) {
-      AuthManager.instance = new AuthManager()
+  private initFromUrl() {
+    const params = new URLSearchParams(window.location.search)
+    this.userId = params.get('userId')
+    this.email = params.get('email')
+    this.username = params.get('username')
+    
+    if (this.userId) {
+      sessionStorage.setItem('wspr_userId', this.userId)
     }
-    return AuthManager.instance
-  }
-
-  private initializeFromURL() {
-    // Get user credentials from URL params (passed from RMG iframe)
-    const urlParams = new URLSearchParams(window.location.search)
-    const userId = urlParams.get('userId')
-    const email = urlParams.get('email')
-
-    if (userId && email) {
-      this.user = { userId, email }
-      // Store in sessionStorage for persistence
-      sessionStorage.setItem('rmg_user', JSON.stringify(this.user))
-      
-      // Clean URL to remove sensitive params
-      window.history.replaceState({}, '', window.location.pathname)
-    } else {
-      // Try to restore from sessionStorage
-      const stored = sessionStorage.getItem('rmg_user')
-      if (stored) {
-        this.user = JSON.parse(stored)
-      }
+    if (this.email) {
+      sessionStorage.setItem('wspr_email', this.email)
+    }
+    if (this.username) {
+      sessionStorage.setItem('wspr_username', this.username)
     }
   }
 
-  getUser(): RMGUser | null {
-    return this.user
+  getUser(): { userId: string; email: string; username: string } | null {
+    const userId = this.userId || sessionStorage.getItem('wspr_userId')
+    const email = this.email || sessionStorage.getItem('wspr_email')
+    const username = this.username || sessionStorage.getItem('wspr_username')
+    
+    if (!userId || !email) {
+      return null
+    }
+    
+    return { userId, email, username: username || email.split('@')[0] }
   }
 
   isAuthenticated(): boolean {
-    return this.user !== null
+    return this.getUser() !== null
   }
 
   logout() {
-    this.user = null
-    sessionStorage.removeItem('rmg_user')
+    this.userId = null
+    this.email = null
+    this.username = null
+    sessionStorage.removeItem('wspr_userId')
+    sessionStorage.removeItem('wspr_email')
+    sessionStorage.removeItem('wspr_username')
   }
 }
 
-export const authManager = AuthManager.getInstance()
+export const authManager = new AuthManager()
