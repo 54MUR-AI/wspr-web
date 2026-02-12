@@ -4,7 +4,7 @@ import { getWorkspaceChannels, deleteChannel } from '../../services/channel.serv
 import { getDMConversations } from '../../services/dm.service'
 import type { DMConversation } from '../../services/dm.service'
 import { WsprChannel } from '../../lib/supabase'
-import ContactsModal from '../../../../../RMG/src/components/ContactsModal'
+import FindContactsModal from '../contacts/FindContactsModal'
 import CreateChannelModal from '../channels/CreateChannelModal'
 
 interface ChannelListProps {
@@ -212,7 +212,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
         isOpen={showFindContacts}
         onClose={() => {
           setShowFindContacts(false)
-          loadDMConversations() // Refresh DM list after closing
+          loadDMConversations()
         }}
         currentUserId={userId}
       />
