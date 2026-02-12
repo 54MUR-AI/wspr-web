@@ -128,21 +128,9 @@ export async function getOrCreateDefaultWorkspace(userId: string): Promise<WsprW
           console.error('Error adding user to Public workspace:', insertError)
         }
         
-        // Grant read access to Public workspace LDGR folder
+        // Grant read access to Public workspace LDGR folder + all channel subfolders
         if (publicWorkspace.ldgr_folder_id) {
-          const { error: accessError } = await supabase
-            .from('folder_access')
-            .insert({
-              folder_id: publicWorkspace.ldgr_folder_id,
-              user_id: userId,
-              access_level: 'read'
-            })
-            .select()
-            .single()
-          
-          if (accessError && accessError.code !== '23505') { // Ignore duplicate key errors
-            console.error('Error granting Public folder access:', accessError)
-          }
+          await grantWorkspaceFolderAccess(publicWorkspace.id, publicWorkspace.ldgr_folder_id, userId, 'read')
         }
       }
       
@@ -179,10 +167,70 @@ export async function addWorkspaceMember(
       return false
     }
 
+    // Grant folder_access for workspace folder + all channel subfolders
+    const { data: workspace } = await supabase
+      .from('wspr_workspaces')
+      .select('ldgr_folder_id')
+      .eq('id', workspaceId)
+      .single()
+
+    if (workspace?.ldgr_folder_id) {
+      const accessLevel = role === 'owner' || role === 'admin' ? 'write' : 'read'
+      await grantWorkspaceFolderAccess(workspaceId, workspace.ldgr_folder_id, userId, accessLevel)
+    }
+
     return true
   } catch (error) {
     console.error('Add member error:', error)
     return false
+  }
+}
+
+/**
+ * Grant folder_access for a workspace folder and all its channel subfolders
+ */
+async function grantWorkspaceFolderAccess(
+  workspaceId: string,
+  workspaceFolderId: string,
+  userId: string,
+  accessLevel: string
+) {
+  // Grant access to workspace folder
+  const { error: wsError } = await supabase
+    .from('folder_access')
+    .upsert({
+      folder_id: workspaceFolderId,
+      user_id: userId,
+      access_level: accessLevel
+    }, { onConflict: 'folder_id,user_id' })
+
+  if (wsError) {
+    console.error('Error granting workspace folder access:', wsError)
+  }
+
+  // Grant access to all channel subfolders in this workspace
+  const { data: channels } = await supabase
+    .from('wspr_channels')
+    .select('ldgr_folder_id')
+    .eq('workspace_id', workspaceId)
+    .not('ldgr_folder_id', 'is', null)
+
+  if (channels) {
+    for (const channel of channels) {
+      if (channel.ldgr_folder_id) {
+        const { error: chError } = await supabase
+          .from('folder_access')
+          .upsert({
+            folder_id: channel.ldgr_folder_id,
+            user_id: userId,
+            access_level: accessLevel
+          }, { onConflict: 'folder_id,user_id' })
+
+        if (chError) {
+          console.error('Error granting channel folder access:', chError)
+        }
+      }
+    }
   }
 }
 
