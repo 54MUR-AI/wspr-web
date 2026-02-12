@@ -17,6 +17,7 @@ export interface DMConversation {
   contact_avatar_color: string | null
   last_message: string
   last_message_at: string
+  last_message_sender_name: string | null
   unread_count: number
 }
 

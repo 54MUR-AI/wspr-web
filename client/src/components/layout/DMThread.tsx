@@ -11,7 +11,7 @@ interface DMThreadProps {
   isConnected?: boolean
 }
 
-interface ContactInfo {
+interface ProfileInfo {
   display_name: string
   avatar_url: string | null
   avatar_color: string | null
@@ -21,11 +21,12 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<DirectMessage[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null)
+  const [contactInfo, setContactInfo] = useState<ProfileInfo | null>(null)
+  const [userInfo, setUserInfo] = useState<ProfileInfo | null>(null)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Load contact info
+  // Load contact info and current user info
   useEffect(() => {
     if (!contactId) return
 
@@ -43,6 +44,24 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
 
     fetchContactInfo()
   }, [contactId])
+
+  useEffect(() => {
+    if (!userId) return
+
+    const fetchUserInfo = async () => {
+      const { data } = await supabase
+        .from('wspr_profiles')
+        .select('display_name, avatar_url, avatar_color')
+        .eq('id', userId)
+        .single()
+
+      if (data) {
+        setUserInfo(data)
+      }
+    }
+
+    fetchUserInfo()
+  }, [userId])
 
   // Load messages and subscribe to new ones
   useEffect(() => {
@@ -222,9 +241,9 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
           <>
             {messages.map((msg) => {
               const isSender = msg.sender_id === userId
-              const displayName = isSender ? (username || 'You') : contactName
-              const avatarUrl = isSender ? null : contactAvatar
-              const avatarColor = isSender ? '#E63946' : contactColor
+              const displayName = isSender ? (userInfo?.display_name || username || 'You') : contactName
+              const avatarUrl = isSender ? (userInfo?.avatar_url || null) : contactAvatar
+              const avatarColor = isSender ? (userInfo?.avatar_color || '#E63946') : contactColor
 
               return (
                 <div key={msg.id} className="flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors">

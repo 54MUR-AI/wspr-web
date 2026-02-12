@@ -1,9 +1,9 @@
 import { Hash, Users, Lock, Plus, ChevronDown, Search, UserPlus, Trash2 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { getWorkspaceChannels, deleteChannel } from '../../services/channel.service'
 import { getDMConversations } from '../../services/dm.service'
 import type { DMConversation } from '../../services/dm.service'
-import { WsprChannel } from '../../lib/supabase'
+import { WsprChannel, supabase } from '../../lib/supabase'
 import FindContactsModal from '../contacts/FindContactsModal'
 import CreateChannelModal from '../channels/CreateChannelModal'
 
@@ -30,20 +30,57 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
     }
   }, [workspaceId])
 
+  const loadDMConversations = useCallback(async () => {
+    const conversations = await getDMConversations(userId)
+    setDmConversations(conversations)
+  }, [userId])
+
   useEffect(() => {
     if (userId) {
       loadDMConversations()
     }
-  }, [userId])
+  }, [userId, loadDMConversations])
+
+  // Real-time subscription for DM list updates
+  useEffect(() => {
+    if (!userId) return
+
+    const subscription = supabase
+      .channel('dm-list-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'wspr_direct_messages',
+          filter: `recipient_id=eq.${userId}`
+        },
+        () => {
+          loadDMConversations()
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'wspr_direct_messages',
+          filter: `sender_id=eq.${userId}`
+        },
+        () => {
+          loadDMConversations()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(subscription)
+    }
+  }, [userId, loadDMConversations])
 
   const loadChannels = async () => {
     const channelData = await getWorkspaceChannels(workspaceId)
     setChannels(channelData)
-  }
-
-  const loadDMConversations = async () => {
-    const conversations = await getDMConversations(userId)
-    setDmConversations(conversations)
   }
 
   const handleDeleteChannel = async (channelId: string, e: React.MouseEvent) => {
@@ -191,7 +228,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
                     </div>
                     {conversation.last_message && (
                       <p className="text-xs truncate opacity-70 mt-0.5">
-                        {conversation.last_message}
+                        {conversation.last_message_sender_name ? `${conversation.last_message_sender_name}: ` : ''}{conversation.last_message}
                       </p>
                     )}
                   </div>
