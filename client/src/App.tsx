@@ -128,6 +128,8 @@ function App() {
             .upsert({
               id: authenticatedUserId,
               display_name: displayName,
+              avatar_url: session.user.user_metadata?.avatar_url || null,
+              avatar_color: session.user.user_metadata?.avatar_color || '#E63946',
               status: 'online',
               updated_at: new Date().toISOString()
             }, { onConflict: 'id' })

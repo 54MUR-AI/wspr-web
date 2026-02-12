@@ -265,11 +265,25 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
               const isEditing = editingMessageId === msg.id
               const canDelete = isAuthor || (isAdminOrMod && isPublicWorkspace)
               
+              const avatarUrl = (msg as any).user?.avatar_url
+              const avatarColor = (msg as any).user?.avatar_color || '#E63946'
+
               return (
                 <div key={msg.id} className="flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-samurai-red flex items-center justify-center font-bold text-white flex-shrink-0 text-sm sm:text-base">
-                    {displayName[0].toUpperCase()}
-                  </div>
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt={displayName}
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div
+                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center font-bold text-white flex-shrink-0 text-sm sm:text-base"
+                      style={{ backgroundColor: avatarColor }}
+                    >
+                      {displayName[0].toUpperCase()}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 mb-1">
                       <span className="font-semibold text-white truncate">{displayName}</span>
