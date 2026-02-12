@@ -248,8 +248,31 @@ export async function deleteMessage(
   try {
     console.log('🗑️ Attempting to delete message:', messageId, 'by user:', userId)
     
-    // Delete message - RLS policy will handle authorization
-    // (allows author to delete own messages, or admin/mod to delete in Public channels)
+    // Fetch message with workspace info
+    const { data: message, error: fetchError } = await supabase
+      .from('wspr_messages')
+      .select('user_id, channel:wspr_channels(workspace:wspr_workspaces(name))')
+      .eq('id', messageId)
+      .single()
+
+    if (fetchError || !message) {
+      console.error('❌ Error fetching message for deletion:', fetchError)
+      return false
+    }
+
+    console.log('📝 Message author:', message.user_id, 'Current user:', userId)
+
+    // Check if this is the Public workspace
+    const isPublicWorkspace = (message as any).channel?.workspace?.name === 'Public'
+    
+    // For non-Public workspaces, verify user is the author
+    // For Public workspace, RLS policy handles admin/mod authorization
+    if (!isPublicWorkspace && message.user_id !== userId) {
+      console.error('❌ Only message author can delete in private workspaces')
+      return false
+    }
+
+    // Delete message - RLS policy will handle final authorization
     const { data: deleteData, error: deleteError } = await supabase
       .from('wspr_messages')
       .delete()
