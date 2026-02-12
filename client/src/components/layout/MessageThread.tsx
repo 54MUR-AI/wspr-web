@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase'
 import type { WsprMessage } from '../../lib/supabase'
 import AttachmentModal from '../attachments/AttachmentModal'
 import AttachmentCard from '../attachments/AttachmentCard'
+import { isAdminOrModerator } from '../../services/permissions.service'
 
 interface MessageThreadProps {
   channelId: string
@@ -29,6 +30,8 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [showAttachmentModal, setShowAttachmentModal] = useState(false)
   const [messageAttachments, setMessageAttachments] = useState<Map<string, Attachment[]>>(new Map())
   const [pendingAttachments, setPendingAttachments] = useState<Array<{ ldgr_file_id: string; filename: string; file_size: number; mime_type: string }>>([])
+  const [isAdminOrMod, setIsAdminOrMod] = useState(false)
+  const [isPublicWorkspace, setIsPublicWorkspace] = useState(false)
 
   useEffect(() => {
     if (!channelId || !userId) {
@@ -37,17 +40,26 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       return
     }
 
-    // Fetch channel name and folder ID
+    // Fetch channel name, folder ID, and workspace info
     const fetchChannelInfo = async () => {
       const { data } = await supabase
         .from('wspr_channels')
-        .select('name, ldgr_folder_id')
+        .select('name, ldgr_folder_id, workspace:wspr_workspaces(name)')
         .eq('id', channelId)
         .single()
       
       if (data) {
         setChannelName(data.name)
         setChannelFolderId(data.ldgr_folder_id)
+        setIsPublicWorkspace((data as any).workspace?.name === 'Public')
+      }
+    }
+
+    // Check if user is admin or moderator
+    const checkAdminStatus = async () => {
+      if (userId) {
+        const isAdminMod = await isAdminOrModerator(userId)
+        setIsAdminOrMod(isAdminMod)
       }
     }
 
@@ -74,6 +86,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
     }
 
     fetchChannelInfo()
+    checkAdminStatus()
     loadMessages()
 
     // Subscribe to real-time messages
@@ -250,6 +263,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
               const decryptedContent = userId ? decryptMessageContent(msg, userId) : msg.content
               const isAuthor = msg.user_id === userId
               const isEditing = editingMessageId === msg.id
+              const canDelete = isAuthor || (isAdminOrMod && isPublicWorkspace)
               
               return (
                 <div key={msg.id} className="flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors">
@@ -291,22 +305,26 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       <div className="space-y-2">
                         <div className="flex items-start gap-2">
                           <p className="text-samurai-steel-light break-words flex-1">{decryptedContent}</p>
-                          {isAuthor && (
+                          {(isAuthor || canDelete) && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => startEdit(msg)}
-                                className="p-1 hover:bg-samurai-grey-darker rounded"
-                                title="Edit message"
-                              >
-                                <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(msg.id)}
-                                className="p-1 hover:bg-samurai-grey-darker rounded"
-                                title="Delete message"
-                              >
-                                <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
-                              </button>
+                              {isAuthor && (
+                                <button
+                                  onClick={() => startEdit(msg)}
+                                  className="p-1 hover:bg-samurai-grey-darker rounded"
+                                  title="Edit message"
+                                >
+                                  <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
+                                </button>
+                              )}
+                              {canDelete && (
+                                <button
+                                  onClick={() => handleDelete(msg.id)}
+                                  className="p-1 hover:bg-samurai-grey-darker rounded"
+                                  title={isAuthor ? "Delete message" : "Delete message (Admin/Mod)"}
+                                >
+                                  <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
