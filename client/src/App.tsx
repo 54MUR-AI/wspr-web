@@ -47,6 +47,10 @@ function App() {
         try {
           const authData = JSON.parse(event.data.authToken)
           if (authData.access_token) {
+            // Clear any existing cached session first
+            await supabase.auth.signOut()
+            
+            // Then set the new session from RMG
             await supabase.auth.setSession({
               access_token: authData.access_token,
               refresh_token: authData.refresh_token
