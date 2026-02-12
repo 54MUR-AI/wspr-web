@@ -68,6 +68,13 @@ export async function declineRMGContactRequest(requestId: string): Promise<boole
   return mutate(() => supabase.from('rmg_contacts').delete().eq('id', requestId))
 }
 
+export async function removeRMGContact(userId: string, contactId: string): Promise<boolean> {
+  return mutate(() =>
+    supabase.from('rmg_contacts').delete()
+      .or(`and(user_id.eq.${userId},contact_id.eq.${contactId}),and(user_id.eq.${contactId},contact_id.eq.${userId})`)
+  )
+}
+
 export async function searchRMGUsers(query: string, currentUserId: string): Promise<any[]> {
   if (!query.trim()) return []
   return rpc('search_users_for_contacts', { search_query: query, current_user_id: currentUserId })

@@ -215,6 +215,11 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
           loadDMConversations()
         }}
         currentUserId={userId}
+        onStartDM={(contactId) => {
+          onChannelSelect(`dm-${contactId}`)
+          setShowFindContacts(false)
+          loadDMConversations()
+        }}
       />
 
       {/* Create Channel Modal */}
