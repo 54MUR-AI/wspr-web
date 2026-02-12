@@ -9,6 +9,9 @@ import type { WsprMessage } from '../../lib/supabase'
 import AttachmentModal from '../attachments/AttachmentModal'
 import AttachmentCard from '../attachments/AttachmentCard'
 import { isAdminOrModerator } from '../../services/permissions.service'
+import { getReactionsForMessages, subscribeToReactions, getMessageReactions } from '../../services/reaction.service'
+import type { Reaction } from '../../services/reaction.service'
+import ReactionBar from '../reactions/ReactionBar'
 
 interface MessageThreadProps {
   channelId: string
@@ -34,6 +37,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [isAdminOrMod, setIsAdminOrMod] = useState(false)
   const [isPublicWorkspace, setIsPublicWorkspace] = useState(false)
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map())
+  const [messageReactions, setMessageReactions] = useState<Map<string, Reaction[]>>(new Map())
 
   useEffect(() => {
     if (!channelId || !userId) {
@@ -80,6 +84,10 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
         }
       }
       setMessageAttachments(attachmentsMap)
+
+      // Load reactions for all messages
+      const reactionsMap = await getReactionsForMessages(messageHistory.map(m => m.id))
+      setMessageReactions(reactionsMap)
       
       setIsLoading(false)
       
@@ -103,8 +111,15 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     })
 
+    // Subscribe to reaction changes
+    const unsubReactions = subscribeToReactions(channelId, async (messageId) => {
+      const reactions = await getMessageReactions(messageId)
+      setMessageReactions(prev => new Map(prev).set(messageId, reactions))
+    })
+
     return () => {
       unsubscribe()
+      unsubReactions()
     }
   }, [channelId, userId])
 
@@ -378,6 +393,16 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                             ))}
                           </div>
                         )}
+                        {/* Reactions */}
+                        <ReactionBar
+                          messageId={msg.id}
+                          userId={userId || ''}
+                          reactions={messageReactions.get(msg.id) || []}
+                          onReactionChange={async () => {
+                            const reactions = await getMessageReactions(msg.id)
+                            setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
+                          }}
+                        />
                       </div>
                     )}
                   </div>
