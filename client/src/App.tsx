@@ -3,6 +3,7 @@ import { Lock } from 'lucide-react'
 import WorkspaceSidebar from './components/layout/WorkspaceSidebar'
 import ChannelList from './components/layout/ChannelList'
 import MessageThread from './components/layout/MessageThread'
+import DMThread from './components/layout/DMThread'
 import SettingsModal from './components/settings/SettingsModal'
 import { authManager } from './utils/auth'
 import { socketService } from './services/socket'
@@ -232,14 +233,23 @@ function App() {
         />
       </div>
 
-      {/* Main Content - Messages - Full width on mobile */}
-      <MessageThread 
-        channelId={selectedChannel}
-        userId={userId}
-        userEmail={userEmail}
-        username={username}
-        isConnected={isConnected}
-      />
+      {/* Main Content - Messages or DMs - Full width on mobile */}
+      {selectedChannel.startsWith('dm-') ? (
+        <DMThread
+          contactId={selectedChannel.replace('dm-', '')}
+          userId={userId}
+          username={username}
+          isConnected={isConnected}
+        />
+      ) : (
+        <MessageThread 
+          channelId={selectedChannel}
+          userId={userId}
+          userEmail={userEmail}
+          username={username}
+          isConnected={isConnected}
+        />
+      )}
 
       {/* Settings Modal */}
       <SettingsModal 
