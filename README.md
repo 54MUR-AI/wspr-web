@@ -1,29 +1,47 @@
-# WSPR Web
+# WSPR
+## Web-Secure P2P Relay
 
-A secure, privacy-focused communication platform with real-time messaging, end-to-end encryption, and advanced cryptographic features.
+A secure, privacy-focused communication platform featuring encrypted workspace channels, private direct messaging, and RMG-integrated contacts. WSPR delivers military-grade security with real-time messaging, LDGR file sharing, and zero-knowledge architecture.
 
 ## 🌟 Features
 
-### Security & Privacy
-- 🔒 Client-side cryptography using Web Crypto API
-- 🔑 AES-GCM symmetric encryption
-- 🤝 ECDH key exchange
-- ⏩ Perfect forward secrecy
-- 🔐 Two-factor authentication (2FA)
-- 🛡️ Granular privacy controls
-- 🔄 Secure WebSocket connections
+### 💬 Direct Messages
+- 🔒 **End-to-End Encryption**: AES-256-GCM encryption for all DMs
+- ⚡ **Real-Time Delivery**: Instant message delivery via WebSocket
+- 📊 **Read Receipts**: See when messages are delivered and read
+- ⌨️ **Typing Indicators**: Know when someone is typing
+- � **Message History**: Full encrypted conversation history
+- 🔐 **Zero-Knowledge**: Server never accesses plaintext content
 
-### Messaging
-- 💬 End-to-end encrypted messaging
-- ⚡ Real-time message delivery
-- 📊 Message status tracking (sent, delivered, read)
-- 😀 Message reactions with emoji support
-- 🧵 Threaded conversations and replies
-- 📌 Message pinning and bookmarking
-- 🗑️ Flexible message deletion (self/all)
-- 📝 Rich text formatting
-- 📎 Encrypted file attachments
-- 🔍 Advanced message search
+### 👥 RMG Contacts Integration
+- 🌐 **Unified Contacts**: Manage contacts once, use across all RMG apps
+- � **Contact Requests**: Send and receive connection requests
+- ✅ **Accept/Decline**: Control who can message you
+- � **Cross-App Sync**: Contacts work in WSPR, SCRP, OMNI, and future apps
+- 👤 **Profile Integration**: Display names and avatars from RMG profiles
+- � **Request Notifications**: Visual badges for pending requests
+
+### 📎 LDGR File Sharing
+- � **Encrypted Attachments**: Files encrypted via LDGR before sending
+- ☁️ **Multi-Storage**: IPFS, Cloud, and P2P transfer support
+- 📊 **File Metadata**: Track file types, sizes, and upload dates
+- � **Seamless Integration**: Share LDGR files directly in conversations
+- 🛡️ **Client-Side Encryption**: Files encrypted before leaving your device
+
+### 🏢 Workspace Channels
+- � **Team Collaboration**: Organized channels for group communication
+- 🔐 **Member Management**: Control who has access to each workspace
+- � **Channel Organization**: Create channels for different topics
+- ⚡ **Real-Time Updates**: Instant message delivery to all members
+
+### Security & Privacy
+- � **Client-Side Cryptography**: Web Crypto API encryption
+- � **AES-GCM Encryption**: Military-grade symmetric encryption
+- 🤝 **ECDH Key Exchange**: Secure key establishment
+- ⏩ **Perfect Forward Secrecy**: Past messages stay secure
+- 🔐 **Two-Factor Authentication**: TOTP and hardware key support
+- 🛡️ **Row-Level Security**: Database-level access control
+- 🔄 **Secure WebSocket**: Encrypted real-time connections
 
 ### User Experience
 - 📱 Virtualized message list for performance
