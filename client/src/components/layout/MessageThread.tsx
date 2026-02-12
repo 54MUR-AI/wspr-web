@@ -286,7 +286,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
               return (
                 <div key={msg.id} className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isAuthor ? 'flex-row-reverse' : ''}`}>
                   {avatar}
-                  <div className={`flex-1 min-w-0 ${!isAuthor ? 'text-right' : ''}`}>
+                  <div className={`flex-1 min-w-0 ${!isAuthor ? 'flex flex-col items-end' : ''}`}>
                     <div className={`flex items-baseline gap-2 mb-1 ${!isAuthor ? 'justify-end' : ''}`}>
                       <span className="font-semibold text-white truncate">{displayName}</span>
                       <span className="text-xs text-samurai-steel flex-shrink-0">{formatTime(msg.created_at)}</span>
@@ -349,7 +349,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                               </button>
                             </div>
                           )}
-                          <p className="text-samurai-steel-light break-words flex-1">{decryptedContent}</p>
+                          <p className={`text-samurai-steel-light break-words ${isAuthor ? 'flex-1' : ''}`}>{decryptedContent}</p>
                         </div>
                         {/* Attachments */}
                         {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (
