@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react'
 import { X, Search, UserPlus, Check, Clock, Ban } from 'lucide-react'
-import { searchUsers } from '../../services/profile.service'
-import { sendContactRequest, getContacts, getPendingRequests, acceptContactRequest, declineContactRequest } from '../../services/contact.service'
-import { WsprProfile, WsprContact } from '../../lib/supabase'
+import { 
+  searchRMGUsers, 
+  sendRMGContactRequest, 
+  getRMGContacts, 
+  getRMGPendingRequests, 
+  acceptRMGContactRequest, 
+  declineRMGContactRequest 
+} from '../../services/rmg-contacts.service'
+import type { RMGContact, RMGPendingRequest } from '../../services/rmg-contacts.service'
 
 interface FindContactsModalProps {
   isOpen: boolean
@@ -12,10 +18,10 @@ interface FindContactsModalProps {
 
 export default function FindContactsModal({ isOpen, onClose, currentUserId }: FindContactsModalProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<WsprProfile[]>([])
+  const [searchResults, setSearchResults] = useState<any[]>([])
   const [existingContacts, setExistingContacts] = useState<Set<string>>(new Set())
   const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set())
-  const [incomingRequests, setIncomingRequests] = useState<(WsprContact & { profile: WsprProfile })[]>([])
+  const [incomingRequests, setIncomingRequests] = useState<RMGPendingRequest[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [activeTab, setActiveTab] = useState<'search' | 'pending'>('search')
 
@@ -27,17 +33,17 @@ export default function FindContactsModal({ isOpen, onClose, currentUserId }: Fi
   }, [isOpen])
 
   const loadExistingContacts = async () => {
-    const contacts = await getContacts(currentUserId)
+    const contacts = await getRMGContacts(currentUserId)
     setExistingContacts(new Set(contacts.map(c => c.contact_id)))
   }
 
   const loadPendingRequests = async () => {
-    const requests = await getPendingRequests(currentUserId)
+    const requests = await getRMGPendingRequests(currentUserId)
     setIncomingRequests(requests)
   }
 
   const handleAcceptRequest = async (requestId: string, senderId: string) => {
-    const success = await acceptContactRequest(requestId, currentUserId, senderId)
+    const success = await acceptRMGContactRequest(requestId, currentUserId, senderId)
     if (success) {
       loadPendingRequests()
       loadExistingContacts()
@@ -45,7 +51,7 @@ export default function FindContactsModal({ isOpen, onClose, currentUserId }: Fi
   }
 
   const handleDeclineRequest = async (requestId: string) => {
-    const success = await declineContactRequest(requestId)
+    const success = await declineRMGContactRequest(requestId)
     if (success) {
       loadPendingRequests()
     }
@@ -58,23 +64,16 @@ export default function FindContactsModal({ isOpen, onClose, currentUserId }: Fi
     }
 
     setIsSearching(true)
-    const results = await searchUsers(searchQuery)
-    // Filter out current user
-    setSearchResults(results.filter(user => user.id !== currentUserId))
+    const results = await searchRMGUsers(searchQuery, currentUserId)
+    setSearchResults(results)
     setIsSearching(false)
   }
 
   const handleSendRequest = async (contactId: string) => {
-    const success = await sendContactRequest(currentUserId, contactId)
+    const success = await sendRMGContactRequest(currentUserId, contactId)
     if (success) {
-      setPendingRequests(prev => new Set(prev).add(contactId))
+      handleSearch() // Refresh search results
     }
-  }
-
-  const getContactStatus = (userId: string) => {
-    if (existingContacts.has(userId)) return 'connected'
-    if (pendingRequests.has(userId)) return 'pending'
-    return 'none'
   }
 
   if (!isOpen) return null
@@ -170,47 +169,53 @@ export default function FindContactsModal({ isOpen, onClose, currentUserId }: Fi
             </div>
           ) : (
             <div className="space-y-2">
-              {searchResults.map((user) => {
-                const status = getContactStatus(user.id)
-                return (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between p-4 bg-samurai-black rounded-lg border border-samurai-grey-dark hover:border-samurai-steel transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-samurai-red rounded-full flex items-center justify-center text-white font-bold">
-                        {user.display_name.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p className="text-white font-semibold">{user.display_name}</p>
-                        <p className="text-sm text-samurai-steel">
-                          {user.status_message || user.status}
-                        </p>
-                      </div>
-                    </div>
-
-                    {status === 'connected' ? (
-                      <div className="flex items-center gap-2 text-green-500">
-                        <Check size={18} />
-                        <span className="text-sm font-semibold">Connected</span>
-                      </div>
-                    ) : status === 'pending' ? (
-                      <div className="flex items-center gap-2 text-yellow-500">
-                        <Clock size={18} />
-                        <span className="text-sm font-semibold">Pending</span>
-                      </div>
+              {searchResults.map((result) => (
+                <div
+                  key={result.user_id}
+                  className="flex items-center justify-between p-4 bg-samurai-black rounded-lg border border-samurai-grey-dark hover:border-samurai-steel transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    {result.avatar_url ? (
+                      <img
+                        src={result.avatar_url}
+                        alt={result.display_name}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
                     ) : (
-                      <button
-                        onClick={() => handleSendRequest(user.id)}
-                        className="flex items-center gap-2 px-4 py-2 bg-samurai-red hover:bg-samurai-red-dark text-white rounded-lg font-semibold transition-colors"
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                        style={{ backgroundColor: result.avatar_color || '#E63946' }}
                       >
-                        <UserPlus size={18} />
-                        Add Contact
-                      </button>
+                        {result.display_name.charAt(0).toUpperCase()}
+                      </div>
                     )}
+                    <div>
+                      <p className="text-white font-semibold">{result.display_name}</p>
+                      <p className="text-sm text-samurai-steel">{result.email}</p>
+                    </div>
                   </div>
-                )
-              })}
+
+                  {result.contact_status === 'accepted' ? (
+                    <div className="flex items-center gap-2 text-green-500">
+                      <Check size={18} />
+                      <span className="text-sm font-semibold">Connected</span>
+                    </div>
+                  ) : result.contact_status === 'pending' ? (
+                    <div className="flex items-center gap-2 text-yellow-500">
+                      <Clock size={18} />
+                      <span className="text-sm font-semibold">Pending</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleSendRequest(result.user_id)}
+                      className="flex items-center gap-2 px-4 py-2 bg-samurai-red hover:bg-samurai-red-dark text-white rounded-lg font-semibold transition-colors"
+                    >
+                      <UserPlus size={18} />
+                      Add Contact
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           )}
           </div>
@@ -228,42 +233,40 @@ export default function FindContactsModal({ isOpen, onClose, currentUserId }: Fi
               <div className="space-y-2">
                 {incomingRequests.map((request) => (
                   <div
-                    key={request.id}
+                    key={request.request_id}
                     className="flex items-center justify-between p-4 bg-samurai-black rounded-lg border border-yellow-500/30 hover:border-yellow-500 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      {request.profile.avatar_url ? (
+                      {request.sender_avatar_url ? (
                         <img
-                          src={request.profile.avatar_url}
-                          alt={request.profile.display_name}
+                          src={request.sender_avatar_url}
+                          alt={request.sender_display_name}
                           className="w-10 h-10 rounded-full object-cover"
                         />
                       ) : (
                         <div 
                           className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
-                          style={{ backgroundColor: request.profile.avatar_color || '#E63946' }}
+                          style={{ backgroundColor: request.sender_avatar_color || '#E63946' }}
                         >
-                          {request.profile.display_name.charAt(0).toUpperCase()}
+                          {request.sender_display_name.charAt(0).toUpperCase()}
                         </div>
                       )}
                       <div>
-                        <p className="text-white font-semibold">{request.profile.display_name}</p>
-                        <p className="text-sm text-samurai-steel">
-                          {request.profile.status_message || 'Wants to connect'}
-                        </p>
+                        <p className="text-white font-semibold">{request.sender_display_name}</p>
+                        <p className="text-sm text-samurai-steel">Wants to connect</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleAcceptRequest(request.id, request.user_id)}
+                        onClick={() => handleAcceptRequest(request.request_id, request.sender_id)}
                         className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
                       >
                         <Check size={18} />
                         Accept
                       </button>
                       <button
-                        onClick={() => handleDeclineRequest(request.id)}
+                        onClick={() => handleDeclineRequest(request.request_id)}
                         className="flex items-center gap-2 px-4 py-2 bg-samurai-grey-dark hover:bg-samurai-steel text-white rounded-lg font-semibold transition-colors"
                       >
                         <Ban size={18} />

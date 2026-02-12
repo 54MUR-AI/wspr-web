@@ -36,7 +36,7 @@ ON wspr_direct_messages FOR INSERT
 WITH CHECK (
   auth.uid() = sender_id
   AND EXISTS (
-    SELECT 1 FROM wspr_contacts
+    SELECT 1 FROM rmg_contacts
     WHERE (user_id = auth.uid() AND contact_id = recipient_id AND status = 'accepted')
        OR (user_id = recipient_id AND contact_id = auth.uid() AND status = 'accepted')
   )

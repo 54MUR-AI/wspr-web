@@ -1,7 +1,8 @@
 import { Hash, Users, Lock, Plus, ChevronDown, Search, UserPlus, Trash2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { getWorkspaceChannels, deleteChannel } from '../../services/channel.service'
-import { getDMConversations, DMConversation } from '../../services/dm.service'
+import { getDMConversations } from '../../services/dm.service'
+import type { DMConversation } from '../../services/dm.service'
 import { WsprChannel } from '../../lib/supabase'
 import FindContactsModal from '../contacts/FindContactsModal'
 import CreateChannelModal from '../channels/CreateChannelModal'
@@ -209,9 +210,11 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
       {/* Find Contacts Modal */}
       <FindContactsModal 
         isOpen={showFindContacts}
-        onClose={() => setShowFindContacts(false)}
+        onClose={() => {
+          setShowFindContacts(false)
+          loadDMConversations() // Refresh DM list after closing
+        }}
         currentUserId={userId}
-        onContactAdded={loadDMConversations}
       />
 
       {/* Create Channel Modal */}
