@@ -330,7 +330,7 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
               return (
                 <div key={msg.id} className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isSender ? 'flex-row-reverse' : ''}`}>
                   {avatar}
-                  <div className={`flex-1 min-w-0 ${!isSender ? 'flex flex-col items-end' : ''}`}>
+                  <div className="flex-1 min-w-0">
                     <div className={`flex items-baseline gap-2 mb-1 ${!isSender ? 'justify-end' : ''}`}>
                       <span className="font-semibold text-white truncate">{displayName}</span>
                       <span className="text-xs text-samurai-steel flex-shrink-0">{formatTime(msg.created_at)}</span>
@@ -338,9 +338,10 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
                         <span className="text-xs text-green-500/60">✓</span>
                       )}
                     </div>
-                    <div className={`flex items-start gap-2 ${!isSender ? 'justify-end' : ''}`}>
+                    <div className={`flex items-start gap-2 ${!isSender ? 'flex-row-reverse' : ''}`}>
+                      <p className="text-samurai-steel-light break-words flex-1">{msg.content}</p>
                       {isSender && (
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                           <button
                             onClick={() => handleDelete(msg.id)}
                             className="p-1 hover:bg-samurai-grey-darker rounded"
@@ -350,7 +351,6 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
                           </button>
                         </div>
                       )}
-                      <p className={`text-samurai-steel-light break-words ${isSender ? 'flex-1' : ''}`}>{msg.content}</p>
                     </div>
                     {/* DM Attachments */}
                     {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (
