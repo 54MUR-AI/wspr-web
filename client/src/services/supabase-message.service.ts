@@ -239,7 +239,7 @@ export async function editMessage(
 }
 
 /**
- * Delete a message (author only)
+ * Delete a message (author or admin/mod in Public channels)
  */
 export async function deleteMessage(
   messageId: string,
@@ -248,26 +248,8 @@ export async function deleteMessage(
   try {
     console.log('🗑️ Attempting to delete message:', messageId, 'by user:', userId)
     
-    // Verify user is the author
-    const { data: message, error: fetchError } = await supabase
-      .from('wspr_messages')
-      .select('user_id')
-      .eq('id', messageId)
-      .single()
-
-    if (fetchError || !message) {
-      console.error('❌ Error fetching message for deletion:', fetchError)
-      return false
-    }
-
-    console.log('📝 Message author:', message.user_id, 'Current user:', userId)
-
-    if (message.user_id !== userId) {
-      console.error('❌ Only message author can delete')
-      return false
-    }
-
-    // Delete message
+    // Delete message - RLS policy will handle authorization
+    // (allows author to delete own messages, or admin/mod to delete in Public channels)
     const { data: deleteData, error: deleteError } = await supabase
       .from('wspr_messages')
       .delete()
