@@ -1,7 +1,7 @@
 import { Hash, Users, Lock, Plus, ChevronDown, Search, UserPlus, Trash2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { getWorkspaceChannels, deleteChannel } from '../../services/channel.service'
-import { getContacts } from '../../services/contact.service'
+import { getDMConversations, DMConversation } from '../../services/dm.service'
 import { WsprChannel } from '../../lib/supabase'
 import FindContactsModal from '../contacts/FindContactsModal'
 import CreateChannelModal from '../channels/CreateChannelModal'
@@ -18,7 +18,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
   const [channelsExpanded, setChannelsExpanded] = useState(true)
   const [dmsExpanded, setDmsExpanded] = useState(true)
   const [channels, setChannels] = useState<WsprChannel[]>([])
-  const [contacts, setContacts] = useState<any[]>([])
+  const [dmConversations, setDmConversations] = useState<DMConversation[]>([])
   const [showFindContacts, setShowFindContacts] = useState(false)
   const [showCreateChannel, setShowCreateChannel] = useState(false)
   const [deletingChannel, setDeletingChannel] = useState<string | null>(null)
@@ -31,7 +31,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
 
   useEffect(() => {
     if (userId) {
-      loadContacts()
+      loadDMConversations()
     }
   }, [userId])
 
@@ -40,9 +40,9 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
     setChannels(channelData)
   }
 
-  const loadContacts = async () => {
-    const contactData = await getContacts(userId)
-    setContacts(contactData)
+  const loadDMConversations = async () => {
+    const conversations = await getDMConversations(userId)
+    setDmConversations(conversations)
   }
 
   const handleDeleteChannel = async (channelId: string, e: React.MouseEvent) => {
@@ -151,27 +151,56 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
 
           {dmsExpanded && (
             <div className="mt-1 space-y-0.5">
-              {contacts.map((contact) => (
+              {dmConversations.map((conversation) => (
                 <button
-                  key={contact.id}
-                  onClick={() => onChannelSelect(`dm-${contact.contact_id}`)}
-                  className={`w-full flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm transition-all ${
-                    selectedChannel === `dm-${contact.contact_id}`
-                      ? 'bg-samurai-red text-white font-semibold'
+                  key={conversation.contact_id}
+                  onClick={() => onChannelSelect(`dm-${conversation.contact_id}`)}
+                  className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all ${
+                    selectedChannel === `dm-${conversation.contact_id}`
+                      ? 'bg-samurai-red text-white'
                       : 'text-samurai-steel hover:bg-samurai-grey-darker hover:text-white'
                   }`}
                 >
-                  <div className="relative">
-                    <div className="w-6 h-6 bg-samurai-red rounded-full flex items-center justify-center text-xs font-bold">
-                      {contact.profile.display_name.charAt(0).toUpperCase()}
-                    </div>
-                    {contact.profile.status === 'online' && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border border-samurai-black-lighter" />
+                  <div className="relative flex-shrink-0">
+                    {conversation.contact_avatar_url ? (
+                      <img
+                        src={conversation.contact_avatar_url}
+                        alt={conversation.contact_display_name}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div 
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                        style={{ backgroundColor: conversation.contact_avatar_color || '#E63946' }}
+                      >
+                        {conversation.contact_display_name.charAt(0).toUpperCase()}
+                      </div>
                     )}
                   </div>
-                  <span>{contact.profile.display_name}</span>
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className={`truncate ${selectedChannel === `dm-${conversation.contact_id}` ? 'font-semibold' : ''}`}>
+                        {conversation.contact_display_name}
+                      </span>
+                      {conversation.unread_count > 0 && (
+                        <span className="ml-2 px-1.5 py-0.5 bg-samurai-red text-white text-xs rounded-full font-bold flex-shrink-0">
+                          {conversation.unread_count}
+                        </span>
+                      )}
+                    </div>
+                    {conversation.last_message && (
+                      <p className="text-xs truncate opacity-70 mt-0.5">
+                        {conversation.last_message}
+                      </p>
+                    )}
+                  </div>
                 </button>
               ))}
+              {dmConversations.length === 0 && (
+                <p className="px-4 py-2 text-xs text-samurai-steel text-center">
+                  No conversations yet
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -182,7 +211,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
         isOpen={showFindContacts}
         onClose={() => setShowFindContacts(false)}
         currentUserId={userId}
-        onContactAdded={loadContacts}
+        onContactAdded={loadDMConversations}
       />
 
       {/* Create Channel Modal */}
