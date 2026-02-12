@@ -19,9 +19,10 @@ interface MessageThreadProps {
   userId?: string
   username?: string
   isConnected?: boolean
+  onMenuToggle?: () => void
 }
 
-export default function MessageThread({ channelId, userEmail, userId, username, isConnected }: MessageThreadProps) {
+export default function MessageThread({ channelId, userEmail, userId, username, isConnected, onMenuToggle }: MessageThreadProps) {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<WsprMessage[]>([])
   const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -256,7 +257,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       <div className="h-16 border-b border-samurai-grey-dark px-4 sm:px-6 flex items-center gap-3">
         {/* Mobile Menu Button */}
         <button 
-          onClick={() => setShowMobileMenu(!showMobileMenu)}
+          onClick={() => onMenuToggle ? onMenuToggle() : setShowMobileMenu(!showMobileMenu)}
           className="sm:hidden p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
         >
           <Menu className="w-5 h-5 text-samurai-steel" />

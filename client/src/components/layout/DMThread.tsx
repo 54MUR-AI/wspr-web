@@ -15,6 +15,7 @@ interface DMThreadProps {
   userId: string
   username?: string
   isConnected?: boolean
+  onMenuToggle?: () => void
 }
 
 interface ProfileInfo {
@@ -23,7 +24,7 @@ interface ProfileInfo {
   avatar_color: string | null
 }
 
-export default function DMThread({ contactId, userId, username, isConnected }: DMThreadProps) {
+export default function DMThread({ contactId, userId, username, isConnected, onMenuToggle }: DMThreadProps) {
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<DirectMessage[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -295,7 +296,7 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
       {/* DM Header */}
       <div className="h-16 border-b border-samurai-grey-dark px-4 sm:px-6 flex items-center gap-3">
         <button 
-          onClick={() => setShowMobileMenu(!showMobileMenu)}
+          onClick={() => onMenuToggle ? onMenuToggle() : setShowMobileMenu(!showMobileMenu)}
           className="sm:hidden p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
         >
           <Menu className="w-5 h-5 text-samurai-steel" />

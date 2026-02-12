@@ -26,6 +26,7 @@ function App() {
   const [isConnected, setIsConnected] = useState(false)
   const [isInitializing, setIsInitializing] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false)
 
   useEffect(() => {
     console.log('WSPR: Setting up message listener')
@@ -255,6 +256,22 @@ function App() {
         />
       </div>
 
+      {/* Mobile Sidebar Overlay */}
+      {showMobileSidebar && (
+        <div className="sm:hidden fixed inset-0 z-50 flex">
+          <div className="bg-samurai-black-lighter w-72 h-full shadow-2xl overflow-y-auto">
+            <ChannelList
+              selectedChannel={selectedChannel}
+              onChannelSelect={(ch) => { setSelectedChannel(ch); setShowMobileSidebar(false) }}
+              workspaceId={selectedWorkspace?.id || ''}
+              userId={userId}
+              workspaceName={selectedWorkspace?.name}
+            />
+          </div>
+          <div className="flex-1 bg-black/50" onClick={() => setShowMobileSidebar(false)} />
+        </div>
+      )}
+
       {/* Main Content - Messages or DMs - Full width on mobile */}
       {selectedChannel.startsWith('dm-') ? (
         <DMThread
@@ -262,6 +279,7 @@ function App() {
           userId={userId}
           username={username}
           isConnected={isConnected}
+          onMenuToggle={() => setShowMobileSidebar(true)}
         />
       ) : (
         <MessageThread 
@@ -270,6 +288,7 @@ function App() {
           userEmail={userEmail}
           username={username}
           isConnected={isConnected}
+          onMenuToggle={() => setShowMobileSidebar(true)}
         />
       )}
 
