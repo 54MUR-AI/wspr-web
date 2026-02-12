@@ -9,6 +9,7 @@ import { authManager } from './utils/auth'
 import { socketService } from './services/socket'
 import { getOrCreateDefaultWorkspace, getUserWorkspaces } from './services/workspace.service'
 import { joinPresence, leavePresence } from './services/online.service'
+import { startNotifications } from './services/notification.service'
 import { getOrCreateDefaultChannels } from './services/channel.service'
 import { supabase, WsprWorkspace } from './lib/supabase'
 import './index.css'
@@ -148,6 +149,9 @@ function App() {
 
         // Join presence channel so other users can see we're online
         joinPresence(authenticatedUserId, displayName)
+
+        // Start browser notifications for new DMs + title badge
+        startNotifications(authenticatedUserId)
 
         // Ensure Drops folder exists in LDGR
         try {
