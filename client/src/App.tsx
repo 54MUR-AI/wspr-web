@@ -67,7 +67,6 @@ function App() {
       if (user) {
         setIsAuthenticated(true)
         setUserEmail(user.email)
-        setUserId(user.userId)
         setUsername(user.username)
         
         // Check if we have a Supabase session, if not try to get one from RMG
@@ -85,6 +84,7 @@ function App() {
 
         // Use the authenticated session user ID for all database operations
         const authenticatedUserId = session.user.id
+        setUserId(authenticatedUserId)
 
         // Get display name from RMG auth metadata (source of truth)
         const displayName = session.user.user_metadata?.display_name || user.username || user.email?.split('@')[0] || 'Unknown'
