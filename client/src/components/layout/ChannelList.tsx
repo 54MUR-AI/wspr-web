@@ -4,6 +4,7 @@ import { getWorkspaceChannels, deleteChannel } from '../../services/channel.serv
 import { getDMConversations } from '../../services/dm.service'
 import type { DMConversation } from '../../services/dm.service'
 import { WsprChannel, supabase } from '../../lib/supabase'
+import { subscribeToOnlineUsers } from '../../services/online.service'
 import FindContactsModal from '../contacts/FindContactsModal'
 import CreateChannelModal from '../channels/CreateChannelModal'
 
@@ -23,6 +24,13 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
   const [showFindContacts, setShowFindContacts] = useState(false)
   const [showCreateChannel, setShowCreateChannel] = useState(false)
   const [deletingChannel, setDeletingChannel] = useState<string | null>(null)
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set())
+
+  // Subscribe to online presence
+  useEffect(() => {
+    const unsubscribe = subscribeToOnlineUsers(setOnlineUsers)
+    return unsubscribe
+  }, [])
 
   useEffect(() => {
     if (workspaceId) {
@@ -214,6 +222,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
                         {conversation.contact_display_name.charAt(0).toUpperCase()}
                       </div>
                     )}
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-samurai-black-lighter ${onlineUsers.has(conversation.contact_id) ? 'bg-green-500' : 'bg-gray-500'}`} />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-center justify-between">

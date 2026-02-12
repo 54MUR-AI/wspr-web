@@ -1,6 +1,7 @@
 import { Send, Paperclip, Smile, Menu, Trash2, MessageSquare } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
+import { subscribeToOnlineUsers } from '../../services/online.service'
 import { getDMMessages, sendDM, markAllDMsAsRead, deleteDM, subscribeToDMs } from '../../services/dm.service'
 import type { DirectMessage } from '../../services/dm.service'
 import { addDMAttachment, getDMMessageAttachments, deleteDMAttachment, downloadDMAttachment, createFileShare } from '../../services/dm-attachment.service'
@@ -33,7 +34,17 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
   const [messageAttachments, setMessageAttachments] = useState<Map<string, DMAttachment[]>>(new Map())
   const [pendingAttachments, setPendingAttachments] = useState<Array<{ ldgr_file_id: string; filename: string; file_size: number; mime_type: string }>>([])
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map())
+  const [isContactOnline, setIsContactOnline] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Track contact online status
+  useEffect(() => {
+    if (!contactId) return
+    const unsubscribe = subscribeToOnlineUsers((onlineSet) => {
+      setIsContactOnline(onlineSet.has(contactId))
+    })
+    return unsubscribe
+  }, [contactId])
 
   // Load contact info and current user info
   useEffect(() => {
@@ -306,14 +317,13 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
           </div>
         )}
         
-        <h3 className="text-lg font-bold text-white">{contactName}</h3>
-        <div className="flex-1" />
-        
-        {/* Connection Status */}
-        <div className="hidden sm:flex items-center gap-2 text-sm text-samurai-steel mr-4">
-          <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-          <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
+        <div>
+          <h3 className="text-lg font-bold text-white">{contactName}</h3>
+          <span className={`text-xs ${isContactOnline ? 'text-green-500' : 'text-samurai-steel'}`}>
+            {isContactOnline ? 'Online' : 'Offline'}
+          </span>
         </div>
+        <div className="flex-1" />
         
         {username && (
           <div className="hidden md:block text-sm text-samurai-steel mr-4">

@@ -8,6 +8,7 @@ import SettingsModal from './components/settings/SettingsModal'
 import { authManager } from './utils/auth'
 import { socketService } from './services/socket'
 import { getOrCreateDefaultWorkspace, getUserWorkspaces } from './services/workspace.service'
+import { joinPresence, leavePresence } from './services/online.service'
 import { getOrCreateDefaultChannels } from './services/channel.service'
 import { supabase, WsprWorkspace } from './lib/supabase'
 import './index.css'
@@ -144,6 +145,9 @@ function App() {
         } catch (e) {
           console.error('Failed to sync profile:', e)
         }
+
+        // Join presence channel so other users can see we're online
+        joinPresence(authenticatedUserId, displayName)
 
         // Ensure Drops folder exists in LDGR
         try {
