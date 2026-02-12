@@ -1,5 +1,6 @@
 import { Send, Paperclip, Smile, Menu, Trash2, MessageSquare } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
 import { getDMMessages, sendDM, markAllDMsAsRead, deleteDM, subscribeToDMs } from '../../services/dm.service'
 import type { DirectMessage } from '../../services/dm.service'
 import { addDMAttachment, getDMMessageAttachments, deleteDMAttachment, downloadDMAttachment, createFileShare } from '../../services/dm-attachment.service'
@@ -31,6 +32,7 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
   const [showAttachmentModal, setShowAttachmentModal] = useState(false)
   const [messageAttachments, setMessageAttachments] = useState<Map<string, DMAttachment[]>>(new Map())
   const [pendingAttachments, setPendingAttachments] = useState<Array<{ ldgr_file_id: string; filename: string; file_size: number; mime_type: string }>>([])
+  const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map())
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Load contact info and current user info
@@ -142,6 +144,28 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
     }
   }, [contactId, userId])
 
+  // Subscribe to typing indicators
+  useEffect(() => {
+    if (!contactId || !userId) return
+
+    const dmRoomId = [userId, contactId].sort().join(':')
+    const unsubscribe = subscribeToTyping(
+      dmRoomId,
+      userId,
+      (uid, name) => setTypingUsers(prev => new Map(prev).set(uid, name)),
+      (uid) => setTypingUsers(prev => { const next = new Map(prev); next.delete(uid); return next })
+    )
+
+    return unsubscribe
+  }, [contactId, userId])
+
+  const handleTyping = useCallback(() => {
+    if (!contactId || !userId) return
+    const dmRoomId = [userId, contactId].sort().join(':')
+    const displayName = userInfo?.display_name || username || 'Someone'
+    sendTypingEvent(dmRoomId, userId, displayName, true)
+  }, [contactId, userId, userInfo, username])
+
   // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -167,6 +191,10 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
 
   const handleSend = async () => {
     if ((!message.trim() && pendingAttachments.length === 0) || !contactId || !userId) return
+
+    // Stop typing indicator on send
+    const dmRoomId = [userId, contactId].sort().join(':')
+    sendTypingEvent(dmRoomId, userId, userInfo?.display_name || username || '', false)
 
     const content = message.trim() || (pendingAttachments.length > 0 ? `Shared ${pendingAttachments.length} file${pendingAttachments.length > 1 ? 's' : ''}` : '')
     const newMessage = await sendDM(userId, contactId, content)
@@ -381,6 +409,16 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
         )}
       </div>
 
+      {/* Typing Indicator */}
+      {typingUsers.size > 0 && (
+        <div className="px-4 sm:px-6 py-1">
+          <span className="text-xs text-samurai-steel italic">
+            {Array.from(typingUsers.values()).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing
+            <span className="animate-pulse">...</span>
+          </span>
+        </div>
+      )}
+
       {/* Message Input */}
       <div className="p-3 sm:p-4 border-t border-samurai-grey-dark">
         <div className="glass-card rounded-xl p-2 sm:p-3">
@@ -410,7 +448,7 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
             <input
               type="text"
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => { setMessage(e.target.value); if (e.target.value.trim()) handleTyping() }}
               onKeyPress={handleKeyPress}
               placeholder={`Message ${contactName}`}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder-samurai-steel text-sm sm:text-base px-2"

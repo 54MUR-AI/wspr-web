@@ -1,5 +1,6 @@
 import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2 } from 'lucide-react'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
 import { socketService, Message } from '../../services/socket'
 import { getChannelMessages, sendChannelMessage, subscribeToChannelMessages, decryptMessageContent, editMessage, deleteMessage } from '../../services/supabase-message.service'
 import { addAttachment, getMessageAttachments, deleteAttachment, downloadAttachment, Attachment } from '../../services/attachment.service'
@@ -32,6 +33,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [pendingAttachments, setPendingAttachments] = useState<Array<{ ldgr_file_id: string; filename: string; file_size: number; mime_type: string }>>([])
   const [isAdminOrMod, setIsAdminOrMod] = useState(false)
   const [isPublicWorkspace, setIsPublicWorkspace] = useState(false)
+  const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map())
 
   useEffect(() => {
     if (!channelId || !userId) {
@@ -106,6 +108,25 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
     }
   }, [channelId, userId])
 
+  // Subscribe to typing indicators for this channel
+  useEffect(() => {
+    if (!channelId || !userId) return
+
+    const unsubscribeTyping = subscribeToTyping(
+      `channel:${channelId}`,
+      userId,
+      (uid, name) => setTypingUsers(prev => new Map(prev).set(uid, name)),
+      (uid) => setTypingUsers(prev => { const next = new Map(prev); next.delete(uid); return next })
+    )
+
+    return unsubscribeTyping
+  }, [channelId, userId])
+
+  const handleTyping = useCallback(() => {
+    if (!channelId || !userId) return
+    sendTypingEvent(`channel:${channelId}`, userId, username || 'Someone', true)
+  }, [channelId, userId, username])
+
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -113,6 +134,9 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
 
   const handleSend = async () => {
     if (!message.trim() || !channelId || !userId) return
+
+    // Stop typing indicator on send
+    sendTypingEvent(`channel:${channelId}`, userId, username || '', false)
 
     const newMessage = await sendChannelMessage(channelId, userId, message)
     if (newMessage) {
@@ -376,6 +400,16 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
         )}
       </div>
 
+      {/* Typing Indicator */}
+      {typingUsers.size > 0 && (
+        <div className="px-4 sm:px-6 py-1">
+          <span className="text-xs text-samurai-steel italic">
+            {Array.from(typingUsers.values()).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing
+            <span className="animate-pulse">...</span>
+          </span>
+        </div>
+      )}
+
       {/* Message Input */}
       <div className="p-3 sm:p-4 border-t border-samurai-grey-dark">
         <div className="glass-card rounded-xl p-2 sm:p-3">
@@ -406,7 +440,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
             <input
               type="text"
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => { setMessage(e.target.value); if (e.target.value.trim()) handleTyping() }}
               onKeyPress={handleKeyPress}
               placeholder={`Message ${channelName ? '#' + channelName : ''}`}
               disabled={!channelId}
