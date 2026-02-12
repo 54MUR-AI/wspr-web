@@ -10,82 +10,17 @@ interface AttachmentModalProps {
 }
 
 export default function AttachmentModal({ isOpen, onClose, onAttachFile, userId, channelFolderId }: AttachmentModalProps) {
-  const [activeTab, setActiveTab] = useState<'ldgr' | 'upload'>('ldgr')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   if (!isOpen) return null
 
-  const handleLocalFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setSelectedFile(file)
-    }
-  }
-
-  const handleUpload = async () => {
-    if (!selectedFile) return
-
-    setIsUploading(true)
-    
-    try {
-      // Convert file to base64 for transmission via postMessage
-      const reader = new FileReader()
-      
-      reader.onload = () => {
-        const base64Data = reader.result as string
-        
-        // Send file data to RMG for LDGR upload
-        window.parent.postMessage({
-          type: 'WSPR_UPLOAD_FILE',
-          fileData: base64Data,
-          fileName: selectedFile.name,
-          fileSize: selectedFile.size,
-          fileType: selectedFile.type,
-          userId: userId,
-          channelFolderId: channelFolderId
-        }, '*')
-      }
-      
-      reader.onerror = () => {
-        alert('Failed to read file')
-        setIsUploading(false)
-      }
-      
-      reader.readAsDataURL(selectedFile)
-      
-      // Listen for response
-      const handleResponse = (event: MessageEvent) => {
-        if (event.data.type === 'LDGR_FILE_UPLOADED') {
-          onAttachFile({
-            ldgr_file_id: event.data.fileId,
-            filename: selectedFile.name,
-            file_size: selectedFile.size,
-            mime_type: selectedFile.type
-          })
-          setIsUploading(false)
-          setSelectedFile(null)
-          onClose()
-          window.removeEventListener('message', handleResponse)
-        } else if (event.data.type === 'LDGR_FILE_UPLOAD_ERROR') {
-          alert('Failed to upload file: ' + event.data.error)
-          setIsUploading(false)
-          window.removeEventListener('message', handleResponse)
-        }
-      }
-
-      window.addEventListener('message', handleResponse)
-    } catch (error) {
-      alert('Failed to process file')
-      setIsUploading(false)
-    }
-  }
-
   const handleBrowseLDGR = () => {
+    setIsLoading(true)
     // Request LDGR file browser from RMG
     window.parent.postMessage({
       type: 'WSPR_BROWSE_LDGR',
-      userId: userId
+      userId: userId,
+      channelFolderId: channelFolderId
     }, '*')
 
     // Listen for file selection
@@ -97,7 +32,11 @@ export default function AttachmentModal({ isOpen, onClose, onAttachFile, userId,
           file_size: event.data.fileSize,
           mime_type: event.data.mimeType
         })
+        setIsLoading(false)
         onClose()
+        window.removeEventListener('message', handleSelection)
+      } else if (event.data.type === 'LDGR_BROWSE_CANCELLED') {
+        setIsLoading(false)
         window.removeEventListener('message', handleSelection)
       }
     }
@@ -119,106 +58,23 @@ export default function AttachmentModal({ isOpen, onClose, onAttachFile, userId,
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-samurai-grey-dark">
-          <button
-            onClick={() => setActiveTab('ldgr')}
-            className={`flex-1 px-6 py-3 font-semibold transition-colors ${
-              activeTab === 'ldgr'
-                ? 'text-samurai-red border-b-2 border-samurai-red'
-                : 'text-samurai-steel hover:text-white'
-            }`}
-          >
-            <FolderOpen className="w-4 h-4 inline mr-2" />
-            LDGR Files
-          </button>
-          <button
-            onClick={() => setActiveTab('upload')}
-            className={`flex-1 px-6 py-3 font-semibold transition-colors ${
-              activeTab === 'upload'
-                ? 'text-samurai-red border-b-2 border-samurai-red'
-                : 'text-samurai-steel hover:text-white'
-            }`}
-          >
-            <Upload className="w-4 h-4 inline mr-2" />
-            Upload New
-          </button>
-        </div>
-
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === 'ldgr' ? (
-            <div className="text-center py-12">
-              <FolderOpen className="w-16 h-16 mx-auto mb-4 text-samurai-steel" />
-              <p className="text-samurai-steel mb-6">Browse your LDGR files</p>
-              <button
-                onClick={handleBrowseLDGR}
-                className="btn-primary"
-              >
-                Open LDGR Browser
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="border-2 border-dashed border-samurai-grey-dark rounded-xl p-8 text-center hover:border-samurai-red transition-colors">
-                <Upload className="w-12 h-12 mx-auto mb-4 text-samurai-steel" />
-                <p className="text-white mb-2">Choose a file to upload</p>
-                <p className="text-sm text-samurai-steel mb-4">File will be stored in the channel's LDGR folder</p>
-                <input
-                  type="file"
-                  onChange={handleLocalFileSelect}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="btn-secondary cursor-pointer inline-block"
-                >
-                  Select File
-                </label>
-              </div>
-
-              {selectedFile && (
-                <div className="glass-card p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-white font-semibold">{selectedFile.name}</p>
-                      <p className="text-sm text-samurai-steel">
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setSelectedFile(null)}
-                      className="text-samurai-red hover:text-samurai-red-dark"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        {activeTab === 'upload' && selectedFile && (
-          <div className="p-6 border-t border-samurai-grey-dark flex justify-end gap-3">
+          <div className="text-center py-12">
+            <FolderOpen className="w-16 h-16 mx-auto mb-4 text-samurai-steel" />
+            <p className="text-white mb-2">Share a file from your LDGR</p>
+            <p className="text-sm text-samurai-steel mb-6">
+              Select an existing file to share in this channel
+            </p>
             <button
-              onClick={onClose}
-              className="btn-secondary"
-              disabled={isUploading}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleUpload}
+              onClick={handleBrowseLDGR}
               className="btn-primary"
-              disabled={isUploading}
+              disabled={isLoading}
             >
-              {isUploading ? 'Uploading...' : 'Upload & Attach'}
+              {isLoading ? 'Opening LDGR...' : 'Browse LDGR Files'}
             </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
