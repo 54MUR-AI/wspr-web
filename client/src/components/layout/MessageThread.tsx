@@ -268,24 +268,26 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
               const avatarUrl = (msg as any).user?.avatar_url
               const avatarColor = (msg as any).user?.avatar_color || '#E63946'
 
+              const avatar = avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover flex-shrink-0"
+                />
+              ) : (
+                <div
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center font-bold text-white flex-shrink-0 text-sm sm:text-base"
+                  style={{ backgroundColor: avatarColor }}
+                >
+                  {displayName[0].toUpperCase()}
+                </div>
+              )
+
               return (
-                <div key={msg.id} className="flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={displayName}
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center font-bold text-white flex-shrink-0 text-sm sm:text-base"
-                      style={{ backgroundColor: avatarColor }}
-                    >
-                      {displayName[0].toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 mb-1">
+                <div key={msg.id} className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isAuthor ? 'flex-row-reverse' : ''}`}>
+                  {avatar}
+                  <div className={`flex-1 min-w-0 ${!isAuthor ? 'text-right' : ''}`}>
+                    <div className={`flex items-baseline gap-2 mb-1 ${!isAuthor ? 'justify-end' : ''}`}>
                       <span className="font-semibold text-white truncate">{displayName}</span>
                       <span className="text-xs text-samurai-steel flex-shrink-0">{formatTime(msg.created_at)}</span>
                       {msg.edited_at && (
@@ -317,30 +319,37 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <div className="flex items-start gap-2">
-                          <p className="text-samurai-steel-light break-words flex-1">{decryptedContent}</p>
-                          {(isAuthor || canDelete) && (
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {isAuthor && (
-                                <button
-                                  onClick={() => startEdit(msg)}
-                                  className="p-1 hover:bg-samurai-grey-darker rounded"
-                                  title="Edit message"
-                                >
-                                  <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
-                                </button>
-                              )}
-                              {canDelete && (
-                                <button
-                                  onClick={() => handleDelete(msg.id)}
-                                  className="p-1 hover:bg-samurai-grey-darker rounded"
-                                  title={isAuthor ? "Delete message" : "Delete message (Admin/Mod)"}
-                                >
-                                  <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
-                                </button>
-                              )}
+                        <div className={`flex items-start gap-2 ${!isAuthor ? 'justify-end' : ''}`}>
+                          {isAuthor && (
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity order-last">
+                              <button
+                                onClick={() => startEdit(msg)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Edit message"
+                              >
+                                <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(msg.id)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Delete message"
+                              >
+                                <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                              </button>
                             </div>
                           )}
+                          {!isAuthor && canDelete && (
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleDelete(msg.id)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Delete message (Admin/Mod)"
+                              >
+                                <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                              </button>
+                            </div>
+                          )}
+                          <p className="text-samurai-steel-light break-words flex-1">{decryptedContent}</p>
                         </div>
                         {/* Attachments */}
                         {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (

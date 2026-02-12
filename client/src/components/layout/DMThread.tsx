@@ -245,32 +245,33 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
               const avatarUrl = isSender ? (userInfo?.avatar_url || null) : contactAvatar
               const avatarColor = isSender ? (userInfo?.avatar_color || '#E63946') : contactColor
 
+              const avatar = avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover flex-shrink-0"
+                />
+              ) : (
+                <div
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center font-bold text-white flex-shrink-0 text-sm sm:text-base"
+                  style={{ backgroundColor: avatarColor }}
+                >
+                  {displayName[0]?.toUpperCase() || '?'}
+                </div>
+              )
+
               return (
-                <div key={msg.id} className="flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt={displayName}
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div
-                      className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center font-bold text-white flex-shrink-0 text-sm sm:text-base"
-                      style={{ backgroundColor: avatarColor }}
-                    >
-                      {displayName[0]?.toUpperCase() || '?'}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 mb-1">
+                <div key={msg.id} className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isSender ? 'flex-row-reverse' : ''}`}>
+                  {avatar}
+                  <div className={`flex-1 min-w-0 ${!isSender ? 'text-right' : ''}`}>
+                    <div className={`flex items-baseline gap-2 mb-1 ${!isSender ? 'justify-end' : ''}`}>
                       <span className="font-semibold text-white truncate">{displayName}</span>
                       <span className="text-xs text-samurai-steel flex-shrink-0">{formatTime(msg.created_at)}</span>
                       {!isSender && msg.read_at && (
                         <span className="text-xs text-green-500/60">✓</span>
                       )}
                     </div>
-                    <div className="flex items-start gap-2">
-                      <p className="text-samurai-steel-light break-words flex-1">{msg.content}</p>
+                    <div className={`flex items-start gap-2 ${!isSender ? 'justify-end' : ''}`}>
                       {isSender && (
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
@@ -282,6 +283,7 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
                           </button>
                         </div>
                       )}
+                      <p className="text-samurai-steel-light break-words flex-1">{msg.content}</p>
                     </div>
                   </div>
                 </div>

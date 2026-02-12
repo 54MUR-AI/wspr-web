@@ -144,6 +144,20 @@ function App() {
         } catch (e) {
           console.error('Failed to sync profile:', e)
         }
+
+        // Ensure Drops folder exists in LDGR
+        try {
+          const { data: dropsFolderId, error: dropsError } = await supabase
+            .rpc('ensure_drops_folder', { user_id_param: authenticatedUserId })
+          
+          if (dropsError) {
+            console.warn('⚠️ Could not ensure Drops folder:', dropsError)
+          } else {
+            console.log('📂 Drops folder:', dropsFolderId)
+          }
+        } catch (e) {
+          console.warn('Drops folder creation skipped:', e)
+        }
         
         // Get or create default WSPR workspace
         const defaultWorkspace = await getOrCreateDefaultWorkspace(authenticatedUserId)
