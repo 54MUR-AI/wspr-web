@@ -1,8 +1,12 @@
-import { Send, Smile, Menu, Trash2, MessageSquare } from 'lucide-react'
+import { Send, Paperclip, Smile, Menu, Trash2, MessageSquare } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { getDMMessages, sendDM, markAllDMsAsRead, deleteDM, subscribeToDMs } from '../../services/dm.service'
 import type { DirectMessage } from '../../services/dm.service'
+import { addDMAttachment, getDMMessageAttachments, deleteDMAttachment, downloadDMAttachment, createFileShare } from '../../services/dm-attachment.service'
+import type { DMAttachment } from '../../services/dm-attachment.service'
 import { supabase } from '../../lib/supabase'
+import AttachmentModal from '../attachments/AttachmentModal'
+import AttachmentCard from '../attachments/AttachmentCard'
 
 interface DMThreadProps {
   contactId: string
@@ -24,6 +28,9 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
   const [contactInfo, setContactInfo] = useState<ProfileInfo | null>(null)
   const [userInfo, setUserInfo] = useState<ProfileInfo | null>(null)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showAttachmentModal, setShowAttachmentModal] = useState(false)
+  const [messageAttachments, setMessageAttachments] = useState<Map<string, DMAttachment[]>>(new Map())
+  const [pendingAttachments, setPendingAttachments] = useState<Array<{ ldgr_file_id: string; filename: string; file_size: number; mime_type: string }>>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Load contact info and current user info
@@ -140,17 +147,77 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = async () => {
-    if (!message.trim() || !contactId || !userId) return
+  // Load attachments for all messages
+  useEffect(() => {
+    if (messages.length === 0) return
 
-    const newMessage = await sendDM(userId, contactId, message)
+    const loadAttachments = async () => {
+      const attachmentMap = new Map<string, DMAttachment[]>()
+      for (const msg of messages) {
+        const attachments = await getDMMessageAttachments(msg.id)
+        if (attachments.length > 0) {
+          attachmentMap.set(msg.id, attachments)
+        }
+      }
+      setMessageAttachments(attachmentMap)
+    }
+
+    loadAttachments()
+  }, [messages.length])
+
+  const handleSend = async () => {
+    if ((!message.trim() && pendingAttachments.length === 0) || !contactId || !userId) return
+
+    const content = message.trim() || (pendingAttachments.length > 0 ? `Shared ${pendingAttachments.length} file${pendingAttachments.length > 1 ? 's' : ''}` : '')
+    const newMessage = await sendDM(userId, contactId, content)
     if (newMessage) {
+      // Add attachments if any
+      if (pendingAttachments.length > 0) {
+        for (const attachment of pendingAttachments) {
+          await addDMAttachment(
+            newMessage.id,
+            attachment.ldgr_file_id,
+            attachment.filename,
+            attachment.file_size,
+            attachment.mime_type,
+            userId
+          )
+          // Create file share record for recipient's Drops folder
+          await createFileShare(
+            attachment.ldgr_file_id,
+            contactId,
+            userId,
+            'dm',
+            contactId
+          )
+        }
+        const attachments = await getDMMessageAttachments(newMessage.id)
+        setMessageAttachments(prev => new Map(prev).set(newMessage.id, attachments))
+        setPendingAttachments([])
+      }
       // Optimistically add to UI
       setMessages(prev => {
         if (prev.some(m => m.id === newMessage.id)) return prev
         return [...prev, newMessage]
       })
       setMessage('')
+    }
+  }
+
+  const handleAttachFile = (file: { ldgr_file_id: string; filename: string; file_size: number; mime_type: string }) => {
+    setPendingAttachments(prev => [...prev, file])
+  }
+
+  const handleRemovePendingAttachment = (index: number) => {
+    setPendingAttachments(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleDeleteAttachment = async (attachmentId: string, messageId: string) => {
+    if (!userId || !confirm('Delete this attachment?')) return
+    const success = await deleteDMAttachment(attachmentId, userId)
+    if (success) {
+      const attachments = await getDMMessageAttachments(messageId)
+      setMessageAttachments(prev => new Map(prev).set(messageId, attachments))
     }
   }
 
@@ -285,6 +352,20 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
                       )}
                       <p className="text-samurai-steel-light break-words flex-1">{msg.content}</p>
                     </div>
+                    {/* DM Attachments */}
+                    {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (
+                      <div className="space-y-2 mt-2">
+                        {messageAttachments.get(msg.id)!.map(attachment => (
+                          <AttachmentCard
+                            key={attachment.id}
+                            attachment={attachment}
+                            onDownload={downloadDMAttachment}
+                            onDelete={(id) => handleDeleteAttachment(id, msg.id)}
+                            canDelete={isSender}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )
@@ -297,7 +378,29 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
       {/* Message Input */}
       <div className="p-3 sm:p-4 border-t border-samurai-grey-dark">
         <div className="glass-card rounded-xl p-2 sm:p-3">
+          {/* Pending Attachments */}
+          {pendingAttachments.length > 0 && (
+            <div className="mb-2 space-y-2">
+              {pendingAttachments.map((attachment, index) => (
+                <div key={index} className="glass-card p-2 rounded flex items-center gap-2">
+                  <span className="text-sm text-white truncate flex-1">{attachment.filename}</span>
+                  <button
+                    onClick={() => handleRemovePendingAttachment(index)}
+                    className="text-samurai-red hover:text-samurai-red-dark"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-1 sm:gap-2">
+            <button
+              onClick={() => setShowAttachmentModal(true)}
+              className="hidden sm:block p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
+            >
+              <Paperclip className="w-5 h-5 text-samurai-steel hover:text-white transition-colors" />
+            </button>
             <input
               type="text"
               value={message}
@@ -311,7 +414,7 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
             </button>
             <button
               onClick={handleSend}
-              disabled={!message.trim()}
+              disabled={!message.trim() && pendingAttachments.length === 0}
               className="p-2 sm:p-2 bg-samurai-red hover:bg-samurai-red-dark disabled:bg-samurai-grey-dark disabled:cursor-not-allowed rounded-lg transition-colors"
             >
               <Send className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
@@ -319,6 +422,14 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
           </div>
         </div>
       </div>
+
+      {/* Attachment Modal */}
+      <AttachmentModal
+        isOpen={showAttachmentModal}
+        onClose={() => setShowAttachmentModal(false)}
+        onAttachFile={handleAttachFile}
+        userId={userId}
+      />
     </div>
   )
 }

@@ -1,8 +1,15 @@
 import { File, Download, X } from 'lucide-react'
-import { Attachment } from '../../services/attachment.service'
+
+interface AttachmentData {
+  id: string
+  ldgr_file_id: string
+  filename: string
+  file_size: number
+  mime_type: string | null
+}
 
 interface AttachmentCardProps {
-  attachment: Attachment
+  attachment: AttachmentData
   onDownload: (ldgrFileId: string, filename: string) => void
   onDelete?: (attachmentId: string) => void
   canDelete: boolean
