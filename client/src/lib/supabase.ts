@@ -22,6 +22,7 @@ export type WsprProfile = {
   status: 'online' | 'away' | 'busy' | 'offline'
   status_message: string | null
   avatar_url: string | null
+  avatar_color: string | null
   created_at: string
   updated_at: string
 }
