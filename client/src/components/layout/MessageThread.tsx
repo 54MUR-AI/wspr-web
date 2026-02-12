@@ -319,7 +319,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <div className="flex items-start gap-2">
+                        <div className={`flex items-start gap-2 ${!isAuthor ? 'justify-end' : ''}`}>
                           {!isAuthor && canDelete && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                               <button
@@ -331,7 +331,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                               </button>
                             </div>
                           )}
-                          <p className="text-samurai-steel-light break-words flex-1">{decryptedContent}</p>
+                          <p className={`text-samurai-steel-light break-words ${isAuthor ? 'flex-1' : 'max-w-[85%]'}`}>{decryptedContent}</p>
                           {isAuthor && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                               <button

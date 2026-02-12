@@ -338,8 +338,8 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
                         <span className="text-xs text-green-500/60">✓</span>
                       )}
                     </div>
-                    <div className="flex items-start gap-2">
-                      <p className="text-samurai-steel-light break-words flex-1">{msg.content}</p>
+                    <div className={`flex items-start gap-2 ${!isSender ? 'justify-end' : ''}`}>
+                      <p className={`text-samurai-steel-light break-words ${isSender ? 'flex-1' : 'max-w-[85%]'}`}>{msg.content}</p>
                       {isSender && (
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                           <button
