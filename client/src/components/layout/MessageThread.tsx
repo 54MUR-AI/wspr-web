@@ -321,17 +321,6 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       <div className="space-y-2">
                         <div className={`flex items-start gap-2 ${!isAuthor ? 'justify-end' : ''}`}>
                           <p className={`text-samurai-steel-light break-words ${isAuthor ? 'flex-1' : 'max-w-[85%]'}`}>{decryptedContent}</p>
-                          {!isAuthor && canDelete && (
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                              <button
-                                onClick={() => handleDelete(msg.id)}
-                                className="p-1 hover:bg-samurai-grey-darker rounded"
-                                title="Delete message (Admin/Mod)"
-                              >
-                                <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
-                              </button>
-                            </div>
-                          )}
                           {isAuthor && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                               <button
@@ -368,6 +357,17 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       </div>
                     )}
                   </div>
+                  {!isAuthor && canDelete && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
+                      <button
+                        onClick={() => handleDelete(msg.id)}
+                        className="p-1 hover:bg-samurai-grey-darker rounded"
+                        title="Delete message (Admin/Mod)"
+                      >
+                        <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             })}
