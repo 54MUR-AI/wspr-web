@@ -1,3 +1,12 @@
+/**
+ * RMG Contacts Service for WSPR
+ * 
+ * Mirrors RMG/src/lib/contacts.ts — uses the same Supabase RPCs and tables.
+ * If the RPC names or table schema change in RMG, update this file to match.
+ * 
+ * Table: rmg_contacts
+ * RPCs: get_user_contacts, get_pending_contact_requests, search_users_for_contacts
+ */
 import { supabase } from '../lib/supabase'
 
 export interface RMGContact {
@@ -21,153 +30,45 @@ export interface RMGPendingRequest {
   created_at: string
 }
 
-/**
- * Get user's accepted contacts from RMG
- */
-export async function getRMGContacts(userId: string): Promise<RMGContact[]> {
-  try {
-    const { data, error } = await supabase
-      .rpc('get_user_contacts', { user_id_param: userId })
-
-    if (error) {
-      console.error('Error fetching RMG contacts:', error)
-      return []
-    }
-
-    return data || []
-  } catch (error) {
-    console.error('RMG contacts fetch error:', error)
-    return []
-  }
+// Helper: call an RPC and return data or empty array
+async function rpc<T>(name: string, params: Record<string, string>): Promise<T[]> {
+  const { data, error } = await supabase.rpc(name, params)
+  if (error) { console.error(`[contacts] ${name} failed:`, error); return [] }
+  return data || []
 }
 
-/**
- * Get pending contact requests from RMG
- */
-export async function getRMGPendingRequests(userId: string): Promise<RMGPendingRequest[]> {
-  try {
-    const { data, error } = await supabase
-      .rpc('get_pending_contact_requests', { user_id_param: userId })
-
-    if (error) {
-      console.error('Error fetching RMG pending requests:', error)
-      return []
-    }
-
-    return data || []
-  } catch (error) {
-    console.error('RMG pending requests error:', error)
-    return []
-  }
+// Helper: mutate rmg_contacts and return success boolean
+async function mutate(fn: () => PromiseLike<{ error: any }>): Promise<boolean> {
+  const { error } = await fn()
+  if (error) { console.error('[contacts] mutation failed:', error); return false }
+  return true
 }
 
-/**
- * Send contact request via RMG
- */
+export const getRMGContacts = (userId: string): Promise<RMGContact[]> =>
+  rpc('get_user_contacts', { user_id_param: userId })
+
+export const getRMGPendingRequests = (userId: string): Promise<RMGPendingRequest[]> =>
+  rpc('get_pending_contact_requests', { user_id_param: userId })
+
 export async function sendRMGContactRequest(userId: string, contactId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('rmg_contacts')
-      .insert({
-        user_id: userId,
-        contact_id: contactId,
-        status: 'pending'
-      })
-
-    if (error) {
-      console.error('Error sending RMG contact request:', error)
-      return false
-    }
-
-    return true
-  } catch (error) {
-    console.error('RMG contact request error:', error)
-    return false
-  }
+  return mutate(() => supabase.from('rmg_contacts').insert({ user_id: userId, contact_id: contactId, status: 'pending' }))
 }
 
-/**
- * Accept contact request via RMG
- */
 export async function acceptRMGContactRequest(requestId: string, userId: string, senderId: string): Promise<boolean> {
-  try {
-    // Update the original request to accepted
-    const { error: updateError } = await supabase
-      .from('rmg_contacts')
-      .update({ status: 'accepted' })
-      .eq('id', requestId)
-
-    if (updateError) {
-      console.error('Error accepting RMG request:', updateError)
-      return false
-    }
-
-    // Create reciprocal contact
-    const { error: insertError } = await supabase
-      .from('rmg_contacts')
-      .insert({
-        user_id: userId,
-        contact_id: senderId,
-        status: 'accepted'
-      })
-
-    if (insertError) {
-      console.error('Error creating reciprocal RMG contact:', insertError)
-      return false
-    }
-
-    return true
-  } catch (error) {
-    console.error('Accept RMG request error:', error)
-    return false
-  }
+  const updated = await mutate(() =>
+    supabase.from('rmg_contacts').update({ status: 'accepted' }).eq('id', requestId)
+  )
+  if (!updated) return false
+  return mutate(() =>
+    supabase.from('rmg_contacts').insert({ user_id: userId, contact_id: senderId, status: 'accepted' })
+  )
 }
 
-/**
- * Decline contact request via RMG
- */
 export async function declineRMGContactRequest(requestId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('rmg_contacts')
-      .delete()
-      .eq('id', requestId)
-
-    if (error) {
-      console.error('Error declining RMG request:', error)
-      return false
-    }
-
-    return true
-  } catch (error) {
-    console.error('Decline RMG request error:', error)
-    return false
-  }
+  return mutate(() => supabase.from('rmg_contacts').delete().eq('id', requestId))
 }
 
-/**
- * Search users via RMG function
- */
 export async function searchRMGUsers(query: string, currentUserId: string): Promise<any[]> {
-  try {
-    if (!query.trim()) {
-      return []
-    }
-
-    const { data, error } = await supabase
-      .rpc('search_users_for_contacts', {
-        search_query: query,
-        current_user_id: currentUserId
-      })
-
-    if (error) {
-      console.error('Error searching RMG users:', error)
-      return []
-    }
-
-    return data || []
-  } catch (error) {
-    console.error('RMG user search error:', error)
-    return []
-  }
+  if (!query.trim()) return []
+  return rpc('search_users_for_contacts', { search_query: query, current_user_id: currentUserId })
 }
