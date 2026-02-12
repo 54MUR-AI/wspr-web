@@ -190,6 +190,12 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
             'dm',
             contactId
           )
+          // Ask RMG to grant folder_access so recipient can decrypt the file
+          window.parent.postMessage({
+            type: 'WSPR_GRANT_FILE_ACCESS',
+            fileId: attachment.ldgr_file_id,
+            recipientId: contactId
+          }, '*')
         }
         const attachments = await getDMMessageAttachments(newMessage.id)
         setMessageAttachments(prev => new Map(prev).set(newMessage.id, attachments))
