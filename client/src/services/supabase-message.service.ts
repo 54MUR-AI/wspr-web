@@ -251,7 +251,7 @@ export async function deleteMessage(
     // Fetch message with workspace info
     const { data: message, error: fetchError } = await supabase
       .from('wspr_messages')
-      .select('user_id, channel:wspr_channels(workspace:wspr_workspaces(name))')
+      .select('user_id, channel:wspr_channels(workspace:wspr_workspaces(name, owner_id))')
       .eq('id', messageId)
       .single()
 
@@ -264,11 +264,13 @@ export async function deleteMessage(
 
     // Check if this is the Public workspace
     const isPublicWorkspace = (message as any).channel?.workspace?.name === 'Public'
+    const workspaceOwnerId = (message as any).channel?.workspace?.owner_id
+    const isWorkspaceOwner = workspaceOwnerId === userId
     
-    // For non-Public workspaces, verify user is the author
+    // For non-Public workspaces, verify user is the author OR workspace owner
     // For Public workspace, RLS policy handles admin/mod authorization
-    if (!isPublicWorkspace && message.user_id !== userId) {
-      console.error('❌ Only message author can delete in private workspaces')
+    if (!isPublicWorkspace && message.user_id !== userId && !isWorkspaceOwner) {
+      console.error('❌ Only message author or workspace owner can delete in private workspaces')
       return false
     }
 
