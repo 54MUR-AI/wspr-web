@@ -65,4 +65,5 @@ body {
   background-color: #0A0A0A;
   min-height: 100vh;
   color: white;
+  color-scheme: light only;
 }

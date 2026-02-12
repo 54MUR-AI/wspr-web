@@ -154,22 +154,11 @@ function App() {
   // Show auth required screen if not authenticated from RMG
   if (!isAuthenticated) {
     return (
-      <div className="flex h-screen bg-samurai-black text-white items-center justify-center p-4">
-        <div className="glass-card p-12 rounded-xl max-w-md text-center">
-          <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-            <Lock className="w-16 h-16 text-samurai-red animate-glow-pulse" />
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-4">WSPR</h1>
-          <p className="text-xl text-samurai-steel mb-6">Web Secure P2P Relay</p>
-          <p className="text-samurai-steel-light mb-8">
-            This application must be accessed through the RMG portal.
-          </p>
-          <a
-            href="https://roninmediagroup.com/#/wspr"
-            className="btn-primary inline-block"
-          >
-            Go to RMG Portal
-          </a>
+      <div className="bg-samurai-black flex items-center justify-center p-4 py-32">
+        <div className="text-center">
+          <Lock className="w-16 h-16 text-samurai-red mx-auto mb-4" />
+          <h1 className="text-3xl font-black text-white mb-2 neon-text">WSPR</h1>
+          <p className="text-white/70 mb-6">Please sign in to access WSPR</p>
         </div>
       </div>
     )
