@@ -28,39 +28,57 @@ export default function AttachmentModal({ isOpen, onClose, onAttachFile, userId,
 
     setIsUploading(true)
     
-    // Send file to RMG for LDGR upload
-    window.parent.postMessage({
-      type: 'WSPR_UPLOAD_FILE',
-      file: {
-        name: selectedFile.name,
-        size: selectedFile.size,
-        type: selectedFile.type
-      },
-      userId: userId,
-      channelFolderId: channelFolderId
-    }, '*')
-
-    // Listen for response
-    const handleResponse = (event: MessageEvent) => {
-      if (event.data.type === 'LDGR_FILE_UPLOADED') {
-        onAttachFile({
-          ldgr_file_id: event.data.fileId,
-          filename: selectedFile.name,
-          file_size: selectedFile.size,
-          mime_type: selectedFile.type
-        })
-        setIsUploading(false)
-        setSelectedFile(null)
-        onClose()
-        window.removeEventListener('message', handleResponse)
-      } else if (event.data.type === 'LDGR_FILE_UPLOAD_ERROR') {
-        alert('Failed to upload file: ' + event.data.error)
-        setIsUploading(false)
-        window.removeEventListener('message', handleResponse)
+    try {
+      // Convert file to base64 for transmission via postMessage
+      const reader = new FileReader()
+      
+      reader.onload = () => {
+        const base64Data = reader.result as string
+        
+        // Send file data to RMG for LDGR upload
+        window.parent.postMessage({
+          type: 'WSPR_UPLOAD_FILE',
+          fileData: base64Data,
+          fileName: selectedFile.name,
+          fileSize: selectedFile.size,
+          fileType: selectedFile.type,
+          userId: userId,
+          channelFolderId: channelFolderId
+        }, '*')
       }
-    }
+      
+      reader.onerror = () => {
+        alert('Failed to read file')
+        setIsUploading(false)
+      }
+      
+      reader.readAsDataURL(selectedFile)
+      
+      // Listen for response
+      const handleResponse = (event: MessageEvent) => {
+        if (event.data.type === 'LDGR_FILE_UPLOADED') {
+          onAttachFile({
+            ldgr_file_id: event.data.fileId,
+            filename: selectedFile.name,
+            file_size: selectedFile.size,
+            mime_type: selectedFile.type
+          })
+          setIsUploading(false)
+          setSelectedFile(null)
+          onClose()
+          window.removeEventListener('message', handleResponse)
+        } else if (event.data.type === 'LDGR_FILE_UPLOAD_ERROR') {
+          alert('Failed to upload file: ' + event.data.error)
+          setIsUploading(false)
+          window.removeEventListener('message', handleResponse)
+        }
+      }
 
-    window.addEventListener('message', handleResponse)
+      window.addEventListener('message', handleResponse)
+    } catch (error) {
+      alert('Failed to process file')
+      setIsUploading(false)
+    }
   }
 
   const handleBrowseLDGR = () => {
