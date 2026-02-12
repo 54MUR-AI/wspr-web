@@ -7,7 +7,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,  // Don't cache sessions - always get from RMG
+    autoRefreshToken: false,
+    detectSessionInUrl: false
+  }
+})
 
 // Database types
 export type WsprProfile = {
