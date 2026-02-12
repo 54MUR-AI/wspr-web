@@ -1,5 +1,31 @@
 import { supabase } from '../lib/supabase'
 
+/**
+ * Simple encryption/decryption for DMs (matches channel message approach).
+ * In production, replace with proper E2E encryption using user keys.
+ */
+function encryptDM(content: string): string {
+  return btoa(unescape(encodeURIComponent(content)))
+}
+
+function decryptDM(encrypted: string): string {
+  try {
+    return decodeURIComponent(escape(atob(encrypted)))
+  } catch {
+    return encrypted // Return as-is if decryption fails (legacy plaintext)
+  }
+}
+
+/**
+ * Decrypt a DM message content, handling both encrypted and plaintext messages.
+ */
+export function decryptDMContent(msg: DirectMessage): string {
+  if (msg.is_encrypted) {
+    return decryptDM(msg.content)
+  }
+  return msg.content
+}
+
 export interface DirectMessage {
   id: string
   sender_id: string
@@ -70,13 +96,15 @@ export async function getDMMessages(userId: string, contactId: string, limit = 5
  */
 export async function sendDM(senderId: string, recipientId: string, content: string): Promise<DirectMessage | null> {
   try {
+    const encryptedContent = encryptDM(content)
+
     const { data, error } = await supabase
       .from('wspr_direct_messages')
       .insert({
         sender_id: senderId,
         recipient_id: recipientId,
-        content: content,
-        is_encrypted: false
+        content: encryptedContent,
+        is_encrypted: true
       })
       .select()
       .single()

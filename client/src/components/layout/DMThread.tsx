@@ -2,7 +2,7 @@ import { Send, Paperclip, Smile, Menu, Trash2, MessageSquare } from 'lucide-reac
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
 import { subscribeToOnlineUsers } from '../../services/online.service'
-import { getDMMessages, sendDM, markAllDMsAsRead, deleteDM, subscribeToDMs } from '../../services/dm.service'
+import { getDMMessages, sendDM, markAllDMsAsRead, deleteDM, subscribeToDMs, decryptDMContent } from '../../services/dm.service'
 import type { DirectMessage } from '../../services/dm.service'
 import { addDMAttachment, getDMMessageAttachments, deleteDMAttachment, downloadDMAttachment, createFileShare } from '../../services/dm-attachment.service'
 import type { DMAttachment } from '../../services/dm-attachment.service'
@@ -384,7 +384,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                       )}
                     </div>
                     <div className={`flex items-start gap-2 ${!isSender ? 'justify-end' : ''}`}>
-                      <p className={`text-samurai-steel-light break-words ${isSender ? 'flex-1' : 'max-w-[85%]'}`}>{msg.content}</p>
+                      <p className={`text-samurai-steel-light break-words ${isSender ? 'flex-1' : 'max-w-[85%]'}`}>{decryptDMContent(msg)}</p>
                       {isSender && (
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                           <button
