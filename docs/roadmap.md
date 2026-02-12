@@ -45,7 +45,7 @@
 - ✅ Rich text editor
 - ✅ Message status tracking
 - ⚠️ Group messaging (partial)
-- ⬜ Advanced search functionality
+- ✅ Message search (Supabase ilike, channels + DMs)
 - ⬜ Message translation
 
 ### File & Media Handling 📁
@@ -61,9 +61,12 @@
 
 ### Real-time Features ⚡
 - ✅ WebSocket connections
-- ✅ Presence detection
-- ✅ Typing indicators
+- ✅ Presence detection (Supabase Realtime Presence)
+- ✅ Typing indicators (Supabase Realtime Broadcast)
 - ✅ Message delivery status
+- ✅ Emoji reactions on channel messages
+- ✅ Browser notifications for new DMs
+- ✅ Unread count title badge
 - ⚠️ WebRTC integration (in progress)
 - ⚠️ Voice calls (beta)
 - ⬜ Video calls
@@ -125,13 +128,14 @@
    - Complete video calling system
    - Advanced group features
    - Document preview system
-   - Mobile responsive design
+   - ✅ Mobile responsive design (sidebar overlay, touch-friendly)
 
 2. Medium Priority
    - Browser extensions
    - Message translation
-   - Advanced search
+   - ✅ Message search (implemented)
    - File version control
+   - DM emoji reactions (needs schema change)
 
 3. Future Considerations
    - Desktop application
@@ -144,4 +148,4 @@
 - ⚠️ = Partially implemented/in progress
 - ⬜ = Not implemented
 
-Last updated: [Current Date]
+Last updated: February 12, 2026
