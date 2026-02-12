@@ -9,6 +9,7 @@ import type { DMAttachment } from '../../services/dm-attachment.service'
 import { supabase } from '../../lib/supabase'
 import AttachmentModal from '../attachments/AttachmentModal'
 import AttachmentCard from '../attachments/AttachmentCard'
+import EmojiPicker from '../emoji/EmojiPicker'
 
 interface DMThreadProps {
   contactId: string
@@ -36,6 +37,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
   const [pendingAttachments, setPendingAttachments] = useState<Array<{ ldgr_file_id: string; filename: string; file_size: number; mime_type: string }>>([])
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map())
   const [isContactOnline, setIsContactOnline] = useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Track contact online status
@@ -464,9 +466,20 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
               placeholder={`Message ${contactName}`}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder-samurai-steel text-sm sm:text-base px-2"
             />
-            <button className="hidden sm:block p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors">
-              <Smile className="w-5 h-5 text-samurai-steel hover:text-white transition-colors" />
-            </button>
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
+              >
+                <Smile className="w-5 h-5 text-samurai-steel hover:text-white transition-colors" />
+              </button>
+              {showEmojiPicker && (
+                <EmojiPicker
+                  onSelect={(emoji) => setMessage(prev => prev + emoji)}
+                  onClose={() => setShowEmojiPicker(false)}
+                />
+              )}
+            </div>
             <button
               onClick={handleSend}
               disabled={!message.trim() && pendingAttachments.length === 0}

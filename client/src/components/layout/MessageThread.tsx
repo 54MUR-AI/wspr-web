@@ -12,6 +12,7 @@ import { isAdminOrModerator } from '../../services/permissions.service'
 import { getReactionsForMessages, subscribeToReactions, getMessageReactions } from '../../services/reaction.service'
 import type { Reaction } from '../../services/reaction.service'
 import ReactionBar from '../reactions/ReactionBar'
+import EmojiPicker from '../emoji/EmojiPicker'
 
 interface MessageThreadProps {
   channelId: string
@@ -39,6 +40,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [isPublicWorkspace, setIsPublicWorkspace] = useState(false)
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map())
   const [messageReactions, setMessageReactions] = useState<Map<string, Reaction[]>>(new Map())
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
 
   useEffect(() => {
     if (!channelId || !userId) {
@@ -472,9 +474,20 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
               disabled={!channelId}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder-samurai-steel text-sm sm:text-base px-2 disabled:opacity-50"
             />
-            <button className="hidden sm:block p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors">
-              <Smile className="w-5 h-5 text-samurai-steel hover:text-white transition-colors" />
-            </button>
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
+              >
+                <Smile className="w-5 h-5 text-samurai-steel hover:text-white transition-colors" />
+              </button>
+              {showEmojiPicker && (
+                <EmojiPicker
+                  onSelect={(emoji) => setMessage(prev => prev + emoji)}
+                  onClose={() => setShowEmojiPicker(false)}
+                />
+              )}
+            </div>
             <button
               onClick={handleSend}
               disabled={!message.trim() || !channelId}
