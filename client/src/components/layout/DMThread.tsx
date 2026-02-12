@@ -339,7 +339,7 @@ export default function DMThread({ contactId, userId, username, isConnected }: D
                       )}
                     </div>
                     <div className={`flex items-start gap-2 ${!isSender ? 'flex-row-reverse' : ''}`}>
-                      <p className="text-samurai-steel-light break-words flex-1">{msg.content}</p>
+                      <p className={`text-samurai-steel-light break-words flex-1 ${!isSender ? 'text-right' : ''}`}>{msg.content}</p>
                       {isSender && (
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                           <button
