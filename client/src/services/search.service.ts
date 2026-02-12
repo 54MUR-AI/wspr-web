@@ -1,153 +1,97 @@
-import { Message, MessageSearchFilters } from '../types/message';
-import { errorService } from './error.service';
+import { supabase } from '../lib/supabase'
 
-class SearchService {
-  private static instance: SearchService;
-  private searchIndex: Map<string, Message> = new Map();
-  private readonly SEARCH_BATCH_SIZE = 50;
-
-  private constructor() {
-    this.initializeSearchIndex();
-  }
-
-  static getInstance(): SearchService {
-    if (!SearchService.instance) {
-      SearchService.instance = new SearchService();
-    }
-    return SearchService.instance;
-  }
-
-  async searchMessages(query: string, filters?: MessageSearchFilters): Promise<Message[]> {
-    try {
-      const searchResults = await this.performSearch(query, filters);
-      return this.rankResults(searchResults, query);
-    } catch (error) {
-      errorService.handleError(error, 'SEARCH_MESSAGES_FAILED', 'medium');
-      throw error;
-    }
-  }
-
-  async indexMessage(message: Message): Promise<void> {
-    try {
-      this.searchIndex.set(message.id, message);
-      // Implement server sync for search index
-    } catch (error) {
-      errorService.handleError(error, 'INDEX_MESSAGE_FAILED', 'low');
-    }
-  }
-
-  private async performSearch(
-    query: string,
-    filters?: MessageSearchFilters
-  ): Promise<Message[]> {
-    const results: Message[] = [];
-    const searchTerms = query.toLowerCase().split(' ');
-
-    for (const message of this.searchIndex.values()) {
-      if (this.messageMatchesSearch(message, searchTerms, filters)) {
-        results.push(message);
-      }
-
-      if (results.length >= this.SEARCH_BATCH_SIZE) {
-        break;
-      }
-    }
-
-    return results;
-  }
-
-  private messageMatchesSearch(
-    message: Message,
-    searchTerms: string[],
-    filters?: MessageSearchFilters
-  ): boolean {
-    if (!this.messageMatchesFilters(message, filters)) {
-      return false;
-    }
-
-    const content = message.content.toLowerCase();
-    const matchesTerms = searchTerms.every(term => {
-      if (filters?.excludeKeywords?.includes(term)) {
-        return !content.includes(term);
-      }
-      return content.includes(term);
-    });
-
-    return matchesTerms;
-  }
-
-  private messageMatchesFilters(
-    message: Message,
-    filters?: MessageSearchFilters
-  ): boolean {
-    if (!filters) return true;
-
-    const {
-      startDate,
-      endDate,
-      sender,
-      hasAttachments,
-      hasReactions,
-      isThread,
-      status,
-    } = filters;
-
-    if (startDate && message.timestamp < startDate.getTime()) return false;
-    if (endDate && message.timestamp > endDate.getTime()) return false;
-    if (sender && message.userId !== sender) return false;
-    if (hasAttachments && !message.attachments?.length) return false;
-    if (hasReactions && !message.reactions?.length) return false;
-    if (isThread && !message.threadId) return false;
-    if (status && message.status !== status) return false;
-
-    return true;
-  }
-
-  private rankResults(results: Message[], query: string): Message[] {
-    const queryTerms = query.toLowerCase().split(' ');
-    
-    return results.sort((a, b) => {
-      const scoreA = this.calculateRelevanceScore(a, queryTerms);
-      const scoreB = this.calculateRelevanceScore(b, queryTerms);
-      return scoreB - scoreA;
-    });
-  }
-
-  private calculateRelevanceScore(message: Message, queryTerms: string[]): number {
-    let score = 0;
-    const content = message.content.toLowerCase();
-
-    // Term frequency
-    queryTerms.forEach(term => {
-      const count = (content.match(new RegExp(term, 'g')) || []).length;
-      score += count;
-    });
-
-    // Boost factors
-    if (message.reactions?.length) score += 0.5;
-    if (message.replies?.length) score += 0.3;
-    if (message.attachments?.length) score += 0.2;
-    
-    // Recency boost (within last 24 hours)
-    const isRecent = Date.now() - message.timestamp < 24 * 60 * 60 * 1000;
-    if (isRecent) score += 0.5;
-
-    return score;
-  }
-
-  private async initializeSearchIndex(): Promise<void> {
-    try {
-      // Implement loading initial messages from server
-      window.addEventListener('wspr:message:new', this.handleNewMessage.bind(this));
-    } catch (error) {
-      errorService.handleError(error, 'INITIALIZE_SEARCH_INDEX_FAILED', 'high');
-    }
-  }
-
-  private handleNewMessage(event: CustomEvent): void {
-    const message: Message = event.detail;
-    this.indexMessage(message);
-  }
+export interface SearchResult {
+  id: string
+  type: 'channel' | 'dm'
+  content: string
+  created_at: string
+  // Channel message fields
+  channel_id?: string
+  channel_name?: string
+  user_display_name?: string
+  // DM fields
+  sender_id?: string
+  recipient_id?: string
+  contact_id?: string
+  contact_display_name?: string
 }
 
-export const searchService = SearchService.getInstance();
+/**
+ * Search channel messages and DMs using ilike pattern matching.
+ * Returns up to 20 results sorted by recency.
+ */
+export async function searchMessages(
+  query: string,
+  userId: string,
+  limit = 20
+): Promise<SearchResult[]> {
+  if (!query.trim()) return []
+
+  const pattern = `%${query.trim()}%`
+  const results: SearchResult[] = []
+
+  // Search channel messages
+  const { data: channelMsgs } = await supabase
+    .from('wspr_messages')
+    .select('id, content, created_at, channel_id, user:wspr_profiles!user_id(display_name)')
+    .ilike('content', pattern)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (channelMsgs) {
+    for (const msg of channelMsgs) {
+      // Look up channel name
+      const { data: ch } = await supabase
+        .from('wspr_channels')
+        .select('name')
+        .eq('id', msg.channel_id)
+        .single()
+
+      results.push({
+        id: msg.id,
+        type: 'channel',
+        content: msg.content,
+        created_at: msg.created_at,
+        channel_id: msg.channel_id,
+        channel_name: ch?.name || 'unknown',
+        user_display_name: (msg.user as any)?.display_name || 'Unknown'
+      })
+    }
+  }
+
+  // Search DMs (only messages the user sent or received)
+  const { data: dmMsgs } = await supabase
+    .from('wspr_direct_messages')
+    .select('id, content, created_at, sender_id, recipient_id')
+    .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+    .ilike('content', pattern)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (dmMsgs) {
+    for (const msg of dmMsgs) {
+      const contactId = msg.sender_id === userId ? msg.recipient_id : msg.sender_id
+      const { data: profile } = await supabase
+        .from('wspr_profiles')
+        .select('display_name')
+        .eq('id', contactId)
+        .single()
+
+      results.push({
+        id: msg.id,
+        type: 'dm',
+        content: msg.content,
+        created_at: msg.created_at,
+        sender_id: msg.sender_id,
+        recipient_id: msg.recipient_id,
+        contact_id: contactId,
+        contact_display_name: profile?.display_name || 'Unknown'
+      })
+    }
+  }
+
+  // Sort all results by recency
+  results.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+  return results.slice(0, limit)
+}

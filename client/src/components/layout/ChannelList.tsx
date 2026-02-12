@@ -1,10 +1,12 @@
-import { Hash, Users, Lock, Plus, ChevronDown, Search, UserPlus, Trash2 } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+import { Hash, Users, Lock, Plus, ChevronDown, Search, UserPlus, Trash2, X, MessageSquare } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getWorkspaceChannels, deleteChannel } from '../../services/channel.service'
 import { getDMConversations } from '../../services/dm.service'
 import type { DMConversation } from '../../services/dm.service'
 import { WsprChannel, supabase } from '../../lib/supabase'
 import { subscribeToOnlineUsers } from '../../services/online.service'
+import { searchMessages } from '../../services/search.service'
+import type { SearchResult } from '../../services/search.service'
 import FindContactsModal from '../contacts/FindContactsModal'
 import CreateChannelModal from '../channels/CreateChannelModal'
 
@@ -25,6 +27,40 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
   const [showCreateChannel, setShowCreateChannel] = useState(false)
   const [deletingChannel, setDeletingChannel] = useState<string | null>(null)
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+
+  // Debounced search
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value)
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+    if (!value.trim()) {
+      setSearchResults([])
+      setShowSearchResults(false)
+      return
+    }
+    setIsSearching(true)
+    setShowSearchResults(true)
+    searchTimeoutRef.current = setTimeout(async () => {
+      const results = await searchMessages(value, userId)
+      setSearchResults(results)
+      setIsSearching(false)
+    }, 300)
+  }, [userId])
+
+  const handleSearchResultClick = (result: SearchResult) => {
+    if (result.type === 'channel' && result.channel_id) {
+      onChannelSelect(result.channel_id)
+    } else if (result.type === 'dm' && result.contact_id) {
+      onChannelSelect(`dm-${result.contact_id}`)
+    }
+    setSearchQuery('')
+    setShowSearchResults(false)
+    setSearchResults([])
+  }
 
   // Subscribe to online presence
   useEffect(() => {
@@ -124,9 +160,59 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-samurai-steel" />
           <input
             type="text"
-            placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2 bg-samurai-black border border-samurai-grey-dark rounded-lg text-sm text-white placeholder-samurai-steel focus:outline-none focus:border-samurai-red transition-colors"
+            placeholder="Search messages..."
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            onFocus={() => { if (searchResults.length > 0) setShowSearchResults(true) }}
+            className="w-full pl-10 pr-8 py-2 bg-samurai-black border border-samurai-grey-dark rounded-lg text-sm text-white placeholder-samurai-steel focus:outline-none focus:border-samurai-red transition-colors"
           />
+          {searchQuery && (
+            <button
+              onClick={() => { setSearchQuery(''); setShowSearchResults(false); setSearchResults([]) }}
+              className="absolute right-2 top-2 text-samurai-steel hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Search Results Dropdown */}
+          {showSearchResults && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-samurai-grey-dark border border-samurai-grey rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+              {isSearching ? (
+                <div className="p-3 text-center text-sm text-samurai-steel">Searching...</div>
+              ) : searchResults.length === 0 ? (
+                <div className="p-3 text-center text-sm text-samurai-steel">No results found</div>
+              ) : (
+                searchResults.map((result) => (
+                  <button
+                    key={`${result.type}-${result.id}`}
+                    onClick={() => handleSearchResultClick(result)}
+                    className="w-full text-left px-3 py-2 hover:bg-samurai-grey-darker transition-colors border-b border-samurai-grey-dark/50 last:border-0"
+                  >
+                    <div className="flex items-center gap-2 mb-0.5">
+                      {result.type === 'channel' ? (
+                        <Hash className="w-3 h-3 text-samurai-steel flex-shrink-0" />
+                      ) : (
+                        <MessageSquare className="w-3 h-3 text-samurai-steel flex-shrink-0" />
+                      )}
+                      <span className="text-xs text-samurai-red font-medium truncate">
+                        {result.type === 'channel' ? `#${result.channel_name}` : result.contact_display_name}
+                      </span>
+                      <span className="text-xs text-samurai-steel ml-auto flex-shrink-0">
+                        {new Date(result.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-samurai-steel-light truncate">
+                      {result.type === 'channel' && result.user_display_name && (
+                        <span className="text-white font-medium">{result.user_display_name}: </span>
+                      )}
+                      {result.content}
+                    </p>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
 
