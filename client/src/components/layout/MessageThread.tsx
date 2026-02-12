@@ -320,7 +320,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                     ) : (
                       <div className="space-y-2">
                         <div className={`flex items-start gap-2 ${!isAuthor ? 'flex-row-reverse' : ''}`}>
-                          <p className={`text-samurai-steel-light break-words flex-1 ${!isAuthor ? 'text-right' : ''}`}>{decryptedContent}</p>
+                          <p className="text-samurai-steel-light break-words flex-1">{decryptedContent}</p>
                           {isAuthor && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                               <button
