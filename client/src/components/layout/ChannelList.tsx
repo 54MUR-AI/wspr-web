@@ -4,7 +4,7 @@ import { getWorkspaceChannels, deleteChannel } from '../../services/channel.serv
 import { getDMConversations } from '../../services/dm.service'
 import type { DMConversation } from '../../services/dm.service'
 import { WsprChannel } from '../../lib/supabase'
-import FindContactsModal from '../contacts/FindContactsModal'
+import ContactsModal from '../../../../../RMG/src/components/ContactsModal'
 import CreateChannelModal from '../channels/CreateChannelModal'
 
 interface ChannelListProps {
