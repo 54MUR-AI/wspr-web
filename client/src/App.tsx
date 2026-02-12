@@ -87,16 +87,34 @@ function App() {
         const authenticatedUserId = session.user.id
         setUserId(authenticatedUserId)
 
-        // Get display name from RMG auth metadata (source of truth)
-        const displayName = session.user.user_metadata?.display_name || user.username || user.email?.split('@')[0] || 'Unknown'
+        // Fetch current display name from RMG auth.users table (source of truth)
+        // This ensures we always get the latest display name, not stale JWT metadata
+        let displayName = 'Unknown'
+        try {
+          const { data: authUser, error: authError } = await supabase
+            .rpc('get_user_display_names', { user_ids: [authenticatedUserId] })
+          
+          if (authError) {
+            console.warn('⚠️ Could not fetch display name from auth.users, falling back to metadata:', authError)
+            displayName = session.user.user_metadata?.display_name || user.username || user.email?.split('@')[0] || 'Unknown'
+          } else if (authUser && authUser.length > 0) {
+            displayName = authUser[0].display_name || user.username || user.email?.split('@')[0] || 'Unknown'
+            console.log('✅ Fetched current display name from RMG:', displayName)
+          } else {
+            console.warn('⚠️ No display name found in auth.users, using fallback')
+            displayName = session.user.user_metadata?.display_name || user.username || user.email?.split('@')[0] || 'Unknown'
+          }
+        } catch (e) {
+          console.error('❌ Error fetching display name:', e)
+          displayName = session.user.user_metadata?.display_name || user.username || user.email?.split('@')[0] || 'Unknown'
+        }
         
         console.log('🔍 WSPR Profile Sync Debug:', {
           sessionUserId: session.user.id,
-          sessionUserMetadata: session.user.user_metadata,
-          displayNameFromMetadata: session.user.user_metadata?.display_name,
+          fetchedDisplayName: displayName,
+          fallbackMetadata: session.user.user_metadata?.display_name,
           urlUsername: user.username,
-          emailPrefix: user.email?.split('@')[0],
-          finalDisplayName: displayName
+          emailPrefix: user.email?.split('@')[0]
         })
 
         // Sync RMG user data to wspr_profiles (for contacts to work)
