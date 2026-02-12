@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Lock } from 'lucide-react'
 import WorkspaceSidebar from './components/layout/WorkspaceSidebar'
 import ChannelList from './components/layout/ChannelList'
 import MessageThread from './components/layout/MessageThread'
@@ -155,10 +156,10 @@ function App() {
     return (
       <div className="flex h-screen bg-samurai-black text-white items-center justify-center p-4">
         <div className="glass-card p-12 rounded-xl max-w-md text-center">
-          <div className="w-20 h-20 bg-samurai-red rounded-full mx-auto mb-6 flex items-center justify-center animate-glow-pulse">
-            <span className="text-4xl">🔒</span>
+          <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+            <Lock className="w-16 h-16 text-samurai-red animate-glow-pulse" />
           </div>
-          <h1 className="text-4xl font-bold neon-text mb-4">WSPR</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">WSPR</h1>
           <p className="text-xl text-samurai-steel mb-6">Web Secure P2P Relay</p>
           <p className="text-samurai-steel-light mb-8">
             This application must be accessed through the RMG portal.

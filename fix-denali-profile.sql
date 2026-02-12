@@ -6,8 +6,8 @@ SELECT
   'Current profile:' as info,
   id,
   display_name,
-  email,
-  avatar_url
+  avatar_url,
+  status
 FROM wspr_profiles
 WHERE id = '2d0381c1-b3ce-483e-9bf3-b63fa8c5c96a';
 
@@ -22,7 +22,7 @@ SELECT
   'Updated profile:' as info,
   id,
   display_name,
-  email,
-  avatar_url
+  avatar_url,
+  status
 FROM wspr_profiles
 WHERE id = '2d0381c1-b3ce-483e-9bf3-b63fa8c5c96a';
