@@ -417,7 +417,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                     </div>
                   )}
                 <div className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isAuthor ? 'flex-row-reverse' : ''}`}>
-                  <div className="relative flex-shrink-0">
+                  <div className="relative flex-shrink-0 flex flex-col items-center gap-1">
                     <button onClick={() => setProfileUserId(msg.user_id)} className="cursor-pointer">
                       {avatar}
                     </button>
@@ -431,6 +431,45 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                           window.dispatchEvent(new CustomEvent('wspr:navigate', { detail: { channel: `dm-${uid}` } }))
                         }}
                       />
+                    )}
+                    {!isAuthor && (
+                      <>
+                        <ReactionBar
+                          messageId={msg.id}
+                          userId={userId || ''}
+                          reactions={messageReactions.get(msg.id) || []}
+                          isAuthor={false}
+                          onReactionChange={async () => {
+                            const reactions = await getMessageReactions(msg.id)
+                            setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
+                          }}
+                        />
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
+                            className="p-1 hover:bg-samurai-grey-darker rounded"
+                            title="Reply"
+                          >
+                            <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
+                          </button>
+                          <button
+                            onClick={() => navigator.clipboard.writeText(decryptedContent)}
+                            className="p-1 hover:bg-samurai-grey-darker rounded"
+                            title="Copy text"
+                          >
+                            <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
+                          </button>
+                          {canDelete && (
+                            <button
+                              onClick={() => setDeleteConfirmId(msg.id)}
+                              className="p-1 hover:bg-samurai-grey-darker rounded"
+                              title="Delete message (Admin/Mod)"
+                            >
+                              <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                            </button>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -465,7 +504,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                         </button>
                       </div>
                     ) : (
-                      <div className={`space-y-2 ${!isAuthor ? 'text-right' : ''}`}>
+                      <div className="space-y-2">
                         {/* Quoted parent message */}
                         {msg.thread_id && (() => {
                           const parentMsg = messages.find(m => m.id === msg.thread_id)
@@ -480,8 +519,8 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                             </div>
                           )
                         })()}
-                        <div className="flex items-start gap-2">
-                          <MessageContent content={decryptedContent} className={`text-samurai-steel-light break-words ${isAuthor ? 'flex-1' : 'max-w-[85%]'}`} />
+                        <div className={`flex items-start gap-2 ${!isAuthor ? 'justify-end' : ''}`}>
+                          <MessageContent content={decryptedContent} className="text-samurai-steel-light break-words flex-1" />
                           {isAuthor && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                               <button
@@ -545,45 +584,6 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       </div>
                     )}
                   </div>
-                  {!isAuthor && (
-                    <div className="flex flex-col items-center gap-1 flex-shrink-0">
-                      <ReactionBar
-                        messageId={msg.id}
-                        userId={userId || ''}
-                        reactions={messageReactions.get(msg.id) || []}
-                        isAuthor={false}
-                        onReactionChange={async () => {
-                          const reactions = await getMessageReactions(msg.id)
-                          setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
-                        }}
-                      />
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
-                          className="p-1 hover:bg-samurai-grey-darker rounded"
-                          title="Reply"
-                        >
-                          <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
-                        </button>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(decryptedContent)}
-                          className="p-1 hover:bg-samurai-grey-darker rounded"
-                          title="Copy text"
-                        >
-                          <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
-                        </button>
-                        {canDelete && (
-                          <button
-                            onClick={() => setDeleteConfirmId(msg.id)}
-                            className="p-1 hover:bg-samurai-grey-darker rounded"
-                            title="Delete message (Admin/Mod)"
-                          >
-                            <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
                 </div>
               )
