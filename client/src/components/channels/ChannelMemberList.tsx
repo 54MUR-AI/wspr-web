@@ -86,7 +86,10 @@ export default function ChannelMemberList({ channelId, isOpen, onClose, onMember
   const onlineCount = members.filter(m => onlineUsers.has(m.id)).length
 
   return (
-    <div className="w-60 bg-samurai-black-lighter border-l border-samurai-grey-dark flex flex-col h-full">
+    <>
+    {/* Mobile backdrop */}
+    <div className="sm:hidden fixed inset-0 bg-black/50 z-40" onClick={onClose} />
+    <div className="fixed sm:relative inset-y-0 right-0 z-50 sm:z-auto w-64 sm:w-60 bg-samurai-black-lighter border-l border-samurai-grey-dark flex flex-col h-full shadow-2xl sm:shadow-none">
       {/* Header */}
       <div className="p-4 border-b border-samurai-grey-dark flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -147,5 +150,6 @@ export default function ChannelMemberList({ channelId, isOpen, onClose, onMember
         )}
       </div>
     </div>
+    </>
   )
 }

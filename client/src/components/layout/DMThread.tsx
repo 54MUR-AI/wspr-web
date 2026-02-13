@@ -452,7 +452,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                     <div className="flex items-start gap-2">
                       <MessageContent content={decryptDMContent(msg)} className={`text-samurai-steel-light break-words flex-1 ${!isSender ? 'text-right' : ''}`} />
                       {isSender && (
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
                           <button
                             onClick={() => navigator.clipboard.writeText(decryptDMContent(msg))}
                             className="p-1 hover:bg-samurai-grey-darker rounded"
@@ -486,7 +486,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                     )}
                   </div>
                   {!isSender && (
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
+                    <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
                       <button
                         onClick={() => navigator.clipboard.writeText(decryptDMContent(msg))}
                         className="p-1 hover:bg-samurai-grey-darker rounded"
@@ -550,9 +550,9 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
           <div className="flex items-center gap-1 sm:gap-2">
             <button
               onClick={() => setShowAttachmentModal(true)}
-              className="hidden sm:block p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
+              className="p-1.5 sm:p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
             >
-              <Paperclip className="w-5 h-5 text-samurai-steel hover:text-white transition-colors" />
+              <Paperclip className="w-4 h-4 sm:w-5 sm:h-5 text-samurai-steel hover:text-white transition-colors" />
             </button>
             <input
               type="text"
@@ -562,7 +562,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
               placeholder={`Message ${contactName}`}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder-samurai-steel text-sm sm:text-base px-2"
             />
-            <div className="relative hidden sm:block">
+            <div className="relative">
               <button
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 className="p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"

@@ -338,7 +338,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
         {channelId && (
           <button
             onClick={() => setShowMemberList(!showMemberList)}
-            className={`hidden sm:block p-2 rounded-lg transition-colors ${showMemberList ? 'bg-samurai-red text-white' : 'hover:bg-samurai-grey-darker text-samurai-steel hover:text-white'}`}
+            className={`p-2 rounded-lg transition-colors ${showMemberList ? 'bg-samurai-red text-white' : 'hover:bg-samurai-grey-darker text-samurai-steel hover:text-white'}`}
             title="Toggle member list"
           >
             <Users className="w-5 h-5" />
@@ -483,7 +483,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                         <div className={`flex items-start gap-2 ${!isAuthor ? 'justify-end' : ''}`}>
                           <MessageContent content={decryptedContent} className={`text-samurai-steel-light break-words flex-1 ${!isAuthor ? 'text-right' : ''}`} />
                           {isAuthor && (
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                            <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
                               <button
                                 onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
                                 className="p-1 hover:bg-samurai-grey-darker rounded"
@@ -533,7 +533,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                     )}
                   </div>
                   {!isAuthor && (
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
+                    <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
                       <button
                         onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
                         className="p-1 hover:bg-samurai-grey-darker rounded"
@@ -560,7 +560,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                     </div>
                   )}
                 </div>
-                <div className={`flex ${!isAuthor ? 'justify-end' : 'justify-start'} px-2 sm:px-4 -mx-2 sm:-mx-4`}>
+                <div className={`flex ${!isAuthor ? 'justify-end pr-1 sm:pr-3' : 'justify-start pl-1 sm:pl-3'} px-2 sm:px-4 -mx-2 sm:-mx-4 -mt-1`}>
                   <ReactionBar
                     messageId={msg.id}
                     userId={userId || ''}
@@ -638,10 +638,10 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
           <div className="flex items-center gap-1 sm:gap-2">
             <button 
               onClick={() => setShowAttachmentModal(true)}
-              className="hidden sm:block p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
+              className="p-1.5 sm:p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"
               disabled={!channelId}
             >
-              <Paperclip className="w-5 h-5 text-samurai-steel hover:text-white transition-colors" />
+              <Paperclip className="w-4 h-4 sm:w-5 sm:h-5 text-samurai-steel hover:text-white transition-colors" />
             </button>
             <input
               type="text"
@@ -652,7 +652,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
               disabled={!channelId}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder-samurai-steel text-sm sm:text-base px-2 disabled:opacity-50"
             />
-            <div className="relative hidden sm:block">
+            <div className="relative">
               <button
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 className="p-2 hover:bg-samurai-grey-darker rounded-lg transition-colors"

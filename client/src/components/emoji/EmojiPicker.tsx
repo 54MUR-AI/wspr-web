@@ -19,14 +19,14 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute bottom-full right-0 mb-2 z-50 bg-samurai-grey-dark border border-samurai-grey rounded-xl shadow-2xl w-72">
+      <div className="absolute bottom-full right-0 mb-2 z-50 bg-samurai-grey-dark border border-samurai-grey rounded-xl shadow-2xl w-64 sm:w-72">
         {/* Category Tabs */}
-        <div className="flex border-b border-samurai-grey-dark/50 px-2 pt-2 gap-1 overflow-x-auto">
+        <div className="flex border-b border-samurai-grey-dark/50 px-1 sm:px-2 pt-2 gap-0.5 sm:gap-1 overflow-x-auto scrollbar-none">
           {Object.keys(EMOJI_CATEGORIES).map(cat => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`px-2 py-1 text-xs rounded-t-lg whitespace-nowrap transition-colors ${
+              className={`px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs rounded-t-lg whitespace-nowrap transition-colors ${
                 activeCategory === cat
                   ? 'bg-samurai-red text-white'
                   : 'text-samurai-steel hover:text-white hover:bg-samurai-grey-darker'
@@ -38,12 +38,12 @@ export default function EmojiPicker({ onSelect, onClose }: EmojiPickerProps) {
         </div>
 
         {/* Emoji Grid */}
-        <div className="p-2 grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
+        <div className="p-2 grid grid-cols-8 gap-0.5 sm:gap-1 max-h-48 overflow-y-auto">
           {EMOJI_CATEGORIES[activeCategory].map(emoji => (
             <button
               key={emoji}
               onClick={() => { onSelect(emoji); onClose() }}
-              className="p-1.5 hover:bg-samurai-grey-darker rounded transition-colors text-lg leading-none"
+              className="p-1 sm:p-1.5 hover:bg-samurai-grey-darker active:bg-samurai-grey-darker rounded transition-colors text-lg leading-none"
             >
               {emoji}
             </button>
