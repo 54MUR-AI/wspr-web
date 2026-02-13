@@ -1,4 +1,4 @@
-import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2, Reply, X, Copy, Users } from 'lucide-react'
+import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2, Reply, X, Copy, Users, ArrowDown } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
 import { socketService, Message } from '../../services/socket'
@@ -49,6 +49,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [showMemberList, setShowMemberList] = useState(false)
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [showScrollBottom, setShowScrollBottom] = useState(false)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -180,7 +181,13 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
     if (target.scrollTop < 100 && hasMoreMessages && !isLoadingMore) {
       loadOlderMessages()
     }
+    const distanceFromBottom = target.scrollHeight - target.scrollTop - target.clientHeight
+    setShowScrollBottom(distanceFromBottom > 200)
   }, [loadOlderMessages, hasMoreMessages, isLoadingMore])
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -552,6 +559,19 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
           </>
         )}
       </div>
+
+      {/* Scroll to Bottom */}
+      {showScrollBottom && (
+        <div className="relative">
+          <button
+            onClick={scrollToBottom}
+            className="absolute -top-12 right-6 p-2 bg-samurai-red hover:bg-samurai-red-dark rounded-full shadow-lg transition-all z-10"
+            title="Scroll to bottom"
+          >
+            <ArrowDown className="w-4 h-4 text-white" />
+          </button>
+        </div>
+      )}
 
       {/* Typing Indicator */}
       {typingUsers.size > 0 && (

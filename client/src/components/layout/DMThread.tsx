@@ -1,4 +1,4 @@
-import { Send, Paperclip, Smile, Menu, Trash2, MessageSquare, Copy } from 'lucide-react'
+import { Send, Paperclip, Smile, Menu, Trash2, MessageSquare, Copy, ArrowDown } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
 import { subscribeToOnlineUsers } from '../../services/online.service'
@@ -41,6 +41,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [showScrollBottom, setShowScrollBottom] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
@@ -196,7 +197,13 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
     if (target.scrollTop < 100 && hasMoreMessages && !isLoadingMore) {
       loadOlderMessages()
     }
+    const distanceFromBottom = target.scrollHeight - target.scrollTop - target.clientHeight
+    setShowScrollBottom(distanceFromBottom > 200)
   }, [loadOlderMessages, hasMoreMessages, isLoadingMore])
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   const handleTyping = useCallback(() => {
     if (!contactId || !userId) return
@@ -482,6 +489,19 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
           </>
         )}
       </div>
+
+      {/* Scroll to Bottom */}
+      {showScrollBottom && (
+        <div className="relative">
+          <button
+            onClick={scrollToBottom}
+            className="absolute -top-12 right-6 p-2 bg-samurai-red hover:bg-samurai-red-dark rounded-full shadow-lg transition-all z-10"
+            title="Scroll to bottom"
+          >
+            <ArrowDown className="w-4 h-4 text-white" />
+          </button>
+        </div>
+      )}
 
       {/* Typing Indicator */}
       {typingUsers.size > 0 && (
