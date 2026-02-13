@@ -273,6 +273,7 @@ function App() {
       )}
 
       {/* Main Content - Messages or DMs - Full width on mobile */}
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
       {selectedChannel.startsWith('dm-') ? (
         <DMThread
           contactId={selectedChannel.replace('dm-', '')}
@@ -291,6 +292,7 @@ function App() {
           onMenuToggle={() => setShowMobileSidebar(true)}
         />
       )}
+      </div>
 
       {/* Settings Modal */}
       <SettingsModal 

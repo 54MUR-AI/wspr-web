@@ -307,7 +307,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-samurai-black">
+    <div className="flex-1 flex flex-col bg-samurai-black overflow-hidden">
       {/* Channel Header */}
       <div className="h-16 border-b border-samurai-grey-dark px-4 sm:px-6 flex items-center gap-3">
         {/* Mobile Menu Button */}
@@ -349,8 +349,8 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       {/* Content Row: Messages + Member List */}
       <div className="flex flex-1 overflow-hidden">
       {/* Messages */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-4">
         {isLoadingMore && (
           <div className="text-center py-2">
             <span className="text-xs text-samurai-steel animate-pulse">Loading older messages...</span>
@@ -416,7 +416,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       <div className="flex-1 h-px bg-samurai-grey-dark" />
                     </div>
                   )}
-                <div className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isAuthor ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors overflow-hidden ${!isAuthor ? 'flex-row-reverse' : ''}`}>
                   <div className="relative flex-shrink-0">
                     <button onClick={() => setProfileUserId(msg.user_id)} className="cursor-pointer">
                       {avatar}

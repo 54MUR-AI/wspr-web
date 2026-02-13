@@ -11,7 +11,7 @@ export default function MessageContent({ content, className = '' }: MessageConte
   const parts = content.split(URL_REGEX)
 
   return (
-    <p className={className} style={{ overflowWrap: 'anywhere' }}>
+    <p className={`${className} overflow-hidden`} style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
       {parts.map((part, i) => {
         if (URL_REGEX.test(part)) {
           // Reset regex lastIndex since we're reusing it
