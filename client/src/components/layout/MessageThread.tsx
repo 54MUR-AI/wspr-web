@@ -41,6 +41,9 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map())
   const [messageReactions, setMessageReactions] = useState<Map<string, Reaction[]>>(new Map())
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [hasMoreMessages, setHasMoreMessages] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!channelId || !userId) {
@@ -75,8 +78,10 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
     // Load message history from Supabase
     const loadMessages = async () => {
       setIsLoading(true)
+      setHasMoreMessages(true)
       const messageHistory = await getChannelMessages(channelId, 50)
       setMessages(messageHistory)
+      setHasMoreMessages(messageHistory.length >= 50)
       
       // Load attachments for all messages
       const attachmentsMap = new Map<string, Attachment[]>()
@@ -144,6 +149,32 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
     if (!channelId || !userId) return
     sendTypingEvent(`channel:${channelId}`, userId, username || 'Someone', true)
   }, [channelId, userId, username])
+
+  // Load older messages when scrolling to top
+  const loadOlderMessages = useCallback(async () => {
+    if (!channelId || !hasMoreMessages || isLoadingMore || messages.length === 0) return
+    setIsLoadingMore(true)
+    const olderMessages = await getChannelMessages(channelId, 50, messages.length)
+    if (olderMessages.length < 50) setHasMoreMessages(false)
+    if (olderMessages.length > 0) {
+      setMessages(prev => [...olderMessages, ...prev])
+      // Load reactions for older messages
+      const reactionsMap = await getReactionsForMessages(olderMessages.map(m => m.id))
+      setMessageReactions(prev => {
+        const next = new Map(prev)
+        for (const [k, v] of reactionsMap) next.set(k, v)
+        return next
+      })
+    }
+    setIsLoadingMore(false)
+  }, [channelId, hasMoreMessages, isLoadingMore, messages.length])
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget
+    if (target.scrollTop < 100 && hasMoreMessages && !isLoadingMore) {
+      loadOlderMessages()
+    }
+  }, [loadOlderMessages, hasMoreMessages, isLoadingMore])
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -283,7 +314,17 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        {isLoadingMore && (
+          <div className="text-center py-2">
+            <span className="text-xs text-samurai-steel animate-pulse">Loading older messages...</span>
+          </div>
+        )}
+        {!hasMoreMessages && messages.length > 0 && (
+          <div className="text-center py-2">
+            <span className="text-xs text-samurai-steel">Beginning of conversation</span>
+          </div>
+        )}
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
