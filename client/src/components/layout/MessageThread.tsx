@@ -465,7 +465,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                         </button>
                       </div>
                     ) : (
-                      <div className={`space-y-2 ${!isAuthor ? 'items-end flex flex-col' : ''}`}>
+                      <div className={`space-y-2 ${!isAuthor ? 'text-right' : ''}`}>
                         {/* Quoted parent message */}
                         {msg.thread_id && (() => {
                           const parentMsg = messages.find(m => m.id === msg.thread_id)
