@@ -514,6 +514,15 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                                 </button>
                               </>
                             )}
+                            {!isAuthor && canDelete && (
+                              <button
+                                onClick={() => setDeleteConfirmId(msg.id)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Delete message (Admin/Mod)"
+                              >
+                                <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                              </button>
+                            )}
                           </div>
                         </div>
                         {/* Attachments */}
@@ -543,17 +552,6 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       </div>
                     )}
                   </div>
-                  {!isAuthor && canDelete && (
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
-                      <button
-                        onClick={() => setDeleteConfirmId(msg.id)}
-                        className="p-1 hover:bg-samurai-grey-darker rounded"
-                        title="Delete message (Admin/Mod)"
-                      >
-                        <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
-                      </button>
-                    </div>
-                  )}
                 </div>
                 </div>
               )
