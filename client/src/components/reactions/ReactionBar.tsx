@@ -56,7 +56,7 @@ export default function ReactionBar({ messageId, userId, reactions, onReactionCh
       <div className="relative">
         <button
           onClick={() => setShowPicker(!showPicker)}
-          className="p-1 rounded-full text-samurai-steel hover:text-white hover:bg-samurai-grey-darker transition-colors opacity-0 group-hover:opacity-100"
+          className="p-1 rounded-full text-samurai-red hover:text-samurai-red-dark hover:bg-samurai-grey-darker transition-colors opacity-0 group-hover:opacity-100"
           title="Add reaction"
         >
           <Smile className="w-3.5 h-3.5" />
