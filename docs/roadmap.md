@@ -52,6 +52,10 @@
 - ✅ Full timestamp tooltip on hover
 - ✅ Infinite scroll pagination (channels + DMs)
 - ✅ Emoji picker for message inputs
+- ✅ Clickable URL detection in messages
+- ✅ Scroll-to-bottom floating button
+- ✅ Confirmation dialog for message deletion
+- ✅ Keyboard shortcuts (Escape to cancel edit/reply/emoji)
 - ⬜ Message translation
 
 ### File & Media Handling 📁
