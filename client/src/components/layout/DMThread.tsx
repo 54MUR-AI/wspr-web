@@ -1,4 +1,4 @@
-import { Send, Paperclip, Smile, Menu, Trash2, MessageSquare } from 'lucide-react'
+import { Send, Paperclip, Smile, Menu, Trash2, MessageSquare, Copy } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
 import { subscribeToOnlineUsers } from '../../services/online.service'
@@ -421,8 +421,15 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                     </div>
                     <div className={`flex items-start gap-2 ${!isSender ? 'justify-end' : ''}`}>
                       <p className={`text-samurai-steel-light break-words ${isSender ? 'flex-1' : 'max-w-[85%]'}`}>{decryptDMContent(msg)}</p>
-                      {isSender && (
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <button
+                          onClick={() => navigator.clipboard.writeText(decryptDMContent(msg))}
+                          className="p-1 hover:bg-samurai-grey-darker rounded"
+                          title="Copy text"
+                        >
+                          <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
+                        </button>
+                        {isSender && (
                           <button
                             onClick={() => handleDelete(msg.id)}
                             className="p-1 hover:bg-samurai-grey-darker rounded"
@@ -430,8 +437,8 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                           >
                             <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
                           </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                     {/* DM Attachments */}
                     {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (

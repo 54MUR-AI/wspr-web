@@ -1,4 +1,4 @@
-import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2, Reply, X } from 'lucide-react'
+import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2, Reply, X, Copy } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
 import { socketService, Message } from '../../services/socket'
@@ -443,6 +443,13 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                               title="Reply"
                             >
                               <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
+                            </button>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(decryptedContent)}
+                              className="p-1 hover:bg-samurai-grey-darker rounded"
+                              title="Copy text"
+                            >
+                              <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
                             </button>
                             {isAuthor && (
                               <>
