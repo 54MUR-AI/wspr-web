@@ -533,6 +533,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                           messageId={msg.id}
                           userId={userId || ''}
                           reactions={messageReactions.get(msg.id) || []}
+                          isAuthor={isAuthor}
                           onReactionChange={async () => {
                             const reactions = await getMessageReactions(msg.id)
                             setMessageReactions(prev => new Map(prev).set(msg.id, reactions))

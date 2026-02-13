@@ -10,9 +10,10 @@ interface ReactionBarProps {
   userId: string
   reactions: Reaction[]
   onReactionChange: () => void
+  isAuthor?: boolean
 }
 
-export default function ReactionBar({ messageId, userId, reactions, onReactionChange }: ReactionBarProps) {
+export default function ReactionBar({ messageId, userId, reactions, onReactionChange, isAuthor = true }: ReactionBarProps) {
   const [showPicker, setShowPicker] = useState(false)
 
   // Group reactions by emoji
@@ -33,7 +34,7 @@ export default function ReactionBar({ messageId, userId, reactions, onReactionCh
   }
 
   return (
-    <div className="flex items-center gap-1 flex-wrap mt-1">
+    <div className={`flex items-center gap-1 flex-wrap mt-1 ${!isAuthor ? 'flex-row-reverse' : ''}`}>
       {/* Existing reactions */}
       {Object.entries(grouped).map(([emoji, data]) => (
         <button
@@ -64,7 +65,7 @@ export default function ReactionBar({ messageId, userId, reactions, onReactionCh
         {showPicker && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setShowPicker(false)} />
-            <div className="absolute bottom-full left-0 mb-1 z-50 bg-samurai-grey-dark border border-samurai-grey rounded-lg shadow-xl p-2 flex gap-1">
+            <div className={`absolute bottom-full mb-1 z-50 bg-samurai-grey-dark border border-samurai-grey rounded-lg shadow-xl p-2 flex gap-1 ${isAuthor ? 'left-0' : 'right-0'}`}>
               {QUICK_EMOJIS.map(emoji => (
                 <button
                   key={emoji}
