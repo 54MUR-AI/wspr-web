@@ -1,4 +1,4 @@
-import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2 } from 'lucide-react'
+import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2, Reply, X } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
 import { socketService, Message } from '../../services/socket'
@@ -43,6 +43,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [messageReactions, setMessageReactions] = useState<Map<string, Reaction[]>>(new Map())
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
+  const [replyingTo, setReplyingTo] = useState<{ id: string; content: string; displayName: string } | null>(null)
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -189,8 +190,9 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
     // Stop typing indicator on send
     sendTypingEvent(`channel:${channelId}`, userId, username || '', false)
 
-    const newMessage = await sendChannelMessage(channelId, userId, message)
+    const newMessage = await sendChannelMessage(channelId, userId, message, replyingTo?.id)
     if (newMessage) {
+      setReplyingTo(null)
       // Add attachments if any
       if (pendingAttachments.length > 0) {
         for (const attachment of pendingAttachments) {
@@ -418,26 +420,49 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       </div>
                     ) : (
                       <div className="space-y-2">
+                        {/* Quoted parent message */}
+                        {msg.thread_id && (() => {
+                          const parentMsg = messages.find(m => m.id === msg.thread_id)
+                          if (!parentMsg) return null
+                          const parentName = (parentMsg as any).user?.display_name || 'Unknown'
+                          const parentContent = userId ? decryptMessageContent(parentMsg, userId) : parentMsg.content
+                          return (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-samurai-black/40 border-l-2 border-samurai-steel/30 rounded text-xs">
+                              <Reply className="w-3 h-3 text-samurai-steel flex-shrink-0" />
+                              <span className="text-samurai-steel font-medium">{parentName}:</span>
+                              <span className="text-samurai-steel/70 truncate">{parentContent}</span>
+                            </div>
+                          )
+                        })()}
                         <div className={`flex items-start gap-2 ${!isAuthor ? 'justify-end' : ''}`}>
                           <p className={`text-samurai-steel-light break-words ${isAuthor ? 'flex-1' : 'max-w-[85%]'}`}>{decryptedContent}</p>
-                          {isAuthor && (
-                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                              <button
-                                onClick={() => startEdit(msg)}
-                                className="p-1 hover:bg-samurai-grey-darker rounded"
-                                title="Edit message"
-                              >
-                                <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(msg.id)}
-                                className="p-1 hover:bg-samurai-grey-darker rounded"
-                                title="Delete message"
-                              >
-                                <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                            <button
+                              onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
+                              className="p-1 hover:bg-samurai-grey-darker rounded"
+                              title="Reply"
+                            >
+                              <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
+                            </button>
+                            {isAuthor && (
+                              <>
+                                <button
+                                  onClick={() => startEdit(msg)}
+                                  className="p-1 hover:bg-samurai-grey-darker rounded"
+                                  title="Edit message"
+                                >
+                                  <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(msg.id)}
+                                  className="p-1 hover:bg-samurai-grey-darker rounded"
+                                  title="Delete message"
+                                >
+                                  <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </div>
                         {/* Attachments */}
                         {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (
@@ -498,6 +523,19 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       {/* Message Input */}
       <div className="p-3 sm:p-4 border-t border-samurai-grey-dark">
         <div className="glass-card rounded-xl p-2 sm:p-3">
+          {/* Reply Preview */}
+          {replyingTo && (
+            <div className="mb-2 flex items-center gap-2 px-3 py-2 bg-samurai-black/50 border-l-2 border-samurai-red rounded">
+              <Reply className="w-3 h-3 text-samurai-red flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <span className="text-xs text-samurai-red font-medium">{replyingTo.displayName}</span>
+                <p className="text-xs text-samurai-steel truncate">{replyingTo.content}</p>
+              </div>
+              <button onClick={() => setReplyingTo(null)} className="text-samurai-steel hover:text-white flex-shrink-0">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
           {/* Pending Attachments */}
           {pendingAttachments.length > 0 && (
             <div className="mb-2 space-y-2">

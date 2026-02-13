@@ -33,7 +33,6 @@ export async function getChannelMessages(
         user:wspr_profiles(id, display_name, avatar_url)
       `)
       .eq('channel_id', channelId)
-      .is('thread_id', null) // Only get top-level messages
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
 
