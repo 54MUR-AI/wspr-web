@@ -425,6 +425,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       <UserProfilePopup
                         userId={msg.user_id}
                         onClose={() => setProfileUserId(null)}
+                        align={!isAuthor ? 'right' : 'left'}
                         onStartDM={(uid) => {
                           // Navigate to DM with this user
                           window.dispatchEvent(new CustomEvent('wspr:navigate', { detail: { channel: `dm-${uid}` } }))

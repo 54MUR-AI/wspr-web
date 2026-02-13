@@ -7,6 +7,7 @@ interface UserProfilePopupProps {
   userId: string
   onClose: () => void
   onStartDM?: (userId: string) => void
+  align?: 'left' | 'right'
 }
 
 interface ProfileData {
@@ -18,7 +19,7 @@ interface ProfileData {
   updated_at: string | null
 }
 
-export default function UserProfilePopup({ userId, onClose, onStartDM }: UserProfilePopupProps) {
+export default function UserProfilePopup({ userId, onClose, onStartDM, align = 'left' }: UserProfilePopupProps) {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -42,7 +43,7 @@ export default function UserProfilePopup({ userId, onClose, onStartDM }: UserPro
     return (
       <>
         <div className="fixed inset-0 z-40" onClick={onClose} />
-        <div className="absolute z-50 bg-samurai-grey-dark border border-samurai-grey rounded-xl shadow-2xl p-4 w-64">
+        <div className={`absolute z-50 bg-samurai-grey-dark border border-samurai-grey rounded-xl shadow-2xl p-4 w-64 ${align === 'right' ? 'right-0' : 'left-0'}`}>
           <div className="animate-pulse flex flex-col items-center gap-3">
             <div className="w-16 h-16 rounded-full bg-samurai-grey-darker" />
             <div className="h-4 w-24 bg-samurai-grey-darker rounded" />
@@ -57,7 +58,7 @@ export default function UserProfilePopup({ userId, onClose, onStartDM }: UserPro
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute z-50 bg-samurai-grey-dark border border-samurai-grey rounded-xl shadow-2xl w-64 overflow-hidden">
+      <div className={`absolute z-50 bg-samurai-grey-dark border border-samurai-grey rounded-xl shadow-2xl w-64 overflow-hidden ${align === 'right' ? 'right-0' : 'left-0'}`}>
         {/* Banner */}
         <div className="h-16 bg-gradient-to-r from-samurai-red to-samurai-red-dark" />
 
