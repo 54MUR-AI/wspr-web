@@ -33,6 +33,8 @@ export interface DirectMessage {
   content: string
   is_encrypted: boolean
   read_at: string | null
+  reply_to_id: string | null
+  edited_at: string | null
   created_at: string
 }
 
@@ -94,7 +96,7 @@ export async function getDMMessages(userId: string, contactId: string, limit = 5
 /**
  * Send a direct message
  */
-export async function sendDM(senderId: string, recipientId: string, content: string): Promise<DirectMessage | null> {
+export async function sendDM(senderId: string, recipientId: string, content: string, replyToId?: string): Promise<DirectMessage | null> {
   try {
     const encryptedContent = encryptDM(content)
 
@@ -104,7 +106,8 @@ export async function sendDM(senderId: string, recipientId: string, content: str
         sender_id: senderId,
         recipient_id: recipientId,
         content: encryptedContent,
-        is_encrypted: true
+        is_encrypted: true,
+        reply_to_id: replyToId || null
       })
       .select()
       .single()
@@ -164,6 +167,34 @@ export async function markAllDMsAsRead(userId: string, contactId: string): Promi
   } catch (error) {
     console.error('Mark all as read error:', error)
     return false
+  }
+}
+
+/**
+ * Edit a DM message (sender only)
+ */
+export async function editDM(messageId: string, senderId: string, newContent: string): Promise<{ success: boolean; encryptedContent?: string }> {
+  try {
+    const encryptedContent = encryptDM(newContent)
+
+    const { error } = await supabase
+      .from('wspr_direct_messages')
+      .update({
+        content: encryptedContent,
+        edited_at: new Date().toISOString()
+      })
+      .eq('id', messageId)
+      .eq('sender_id', senderId)
+
+    if (error) {
+      console.error('Error editing DM:', error)
+      return { success: false }
+    }
+
+    return { success: true, encryptedContent }
+  } catch (error) {
+    console.error('Edit DM error:', error)
+    return { success: false }
   }
 }
 

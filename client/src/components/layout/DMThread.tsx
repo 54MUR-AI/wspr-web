@@ -1,16 +1,20 @@
-import { Send, Paperclip, Smile, Menu, Trash2, MessageSquare, Copy, ArrowDown } from 'lucide-react'
+import { Send, Paperclip, Smile, Menu, Trash2, MessageSquare, Copy, ArrowDown, Reply, Edit2, X } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
 import { subscribeToOnlineUsers } from '../../services/online.service'
-import { getDMMessages, sendDM, markAllDMsAsRead, deleteDM, subscribeToDMs, decryptDMContent } from '../../services/dm.service'
+import { getDMMessages, sendDM, markAllDMsAsRead, deleteDM, editDM, decryptDMContent } from '../../services/dm.service'
 import type { DirectMessage } from '../../services/dm.service'
 import { addDMAttachment, getDMMessageAttachments, deleteDMAttachment, downloadDMAttachment, createFileShare } from '../../services/dm-attachment.service'
 import type { DMAttachment } from '../../services/dm-attachment.service'
 import { supabase } from '../../lib/supabase'
 import AttachmentModal from '../attachments/AttachmentModal'
 import AttachmentCard from '../attachments/AttachmentCard'
+import { getDMReactionsForMessages, getDMMessageReactions, subscribeToDMReactions } from '../../services/dm-reaction.service'
+import type { DMReaction } from '../../services/dm-reaction.service'
+import DMReactionBar from '../reactions/DMReactionBar'
 import EmojiPicker from '../emoji/EmojiPicker'
 import MessageContent from '../messages/MessageContent'
+import UserProfilePopup from '../profile/UserProfilePopup'
 import ConfirmDialog from '../modals/ConfirmDialog'
 
 interface DMThreadProps {
@@ -44,6 +48,11 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [showScrollBottom, setShowScrollBottom] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [replyingTo, setReplyingTo] = useState<{ id: string; content: string; displayName: string } | null>(null)
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [editingContent, setEditingContent] = useState('')
+  const [messageReactions, setMessageReactions] = useState<Map<string, DMReaction[]>>(new Map())
+  const [profileUserId, setProfileUserId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
@@ -106,6 +115,11 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
       const dmMessages = await getDMMessages(userId, contactId, 50)
       setMessages(dmMessages)
       setHasMoreMessages(dmMessages.length >= 50)
+
+      // Load reactions for all messages
+      const reactionsMap = await getDMReactionsForMessages(dmMessages.map(m => m.id))
+      setMessageReactions(reactionsMap)
+
       setIsLoading(false)
 
       // Mark all messages from this contact as read
@@ -115,6 +129,13 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
     }
 
     loadMessages()
+
+    // Subscribe to DM reaction changes
+    const dmConvoKey = [userId, contactId].sort().join(':')
+    const unsubReactions = subscribeToDMReactions(dmConvoKey, async (dmMessageId) => {
+      const reactions = await getDMMessageReactions(dmMessageId)
+      setMessageReactions(prev => new Map(prev).set(dmMessageId, reactions))
+    })
 
     // Subscribe to new DMs from this contact
     const subscription = supabase
@@ -164,6 +185,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
 
     return () => {
       supabase.removeChannel(subscription)
+      unsubReactions()
     }
   }, [contactId, userId])
 
@@ -245,8 +267,9 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
     sendTypingEvent(dmRoomId, userId, userInfo?.display_name || username || '', false)
 
     const content = message.trim() || (pendingAttachments.length > 0 ? `Shared ${pendingAttachments.length} file${pendingAttachments.length > 1 ? 's' : ''}` : '')
-    const newMessage = await sendDM(userId, contactId, content)
+    const newMessage = await sendDM(userId, contactId, content, replyingTo?.id)
     if (newMessage) {
+      setReplyingTo(null)
       // Add attachments if any
       if (pendingAttachments.length > 0) {
         for (const attachment of pendingAttachments) {
@@ -311,12 +334,38 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
     setDeleteConfirmId(null)
   }
 
+  const handleEdit = async (messageId: string) => {
+    if (!editingContent.trim() || !userId) return
+    const result = await editDM(messageId, userId, editingContent)
+    if (result.success && result.encryptedContent) {
+      setMessages(prev => prev.map(msg =>
+        msg.id === messageId
+          ? { ...msg, content: result.encryptedContent!, edited_at: new Date().toISOString() }
+          : msg
+      ))
+      setEditingMessageId(null)
+      setEditingContent('')
+    }
+  }
+
+  const startEdit = (msg: DirectMessage) => {
+    setEditingMessageId(msg.id)
+    setEditingContent(decryptDMContent(msg))
+  }
+
+  const cancelEdit = () => {
+    setEditingMessageId(null)
+    setEditingContent('')
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
     } else if (e.key === 'Escape') {
-      if (showEmojiPicker) setShowEmojiPicker(false)
+      if (editingMessageId) cancelEdit()
+      else if (replyingTo) setReplyingTo(null)
+      else if (showEmojiPicker) setShowEmojiPicker(false)
     }
   }
 
@@ -415,6 +464,9 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
               const prevDate = index > 0 ? new Date(messages[index - 1].created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : null
               const showDateSeparator = index === 0 || msgDate !== prevDate
 
+              const decryptedContent = decryptDMContent(msg)
+              const isEditing = editingMessageId === msg.id
+
               const avatar = avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -439,56 +491,122 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                       <div className="flex-1 h-px bg-samurai-grey-dark" />
                     </div>
                   )}
-                <div className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isSender ? 'flex-row-reverse' : ''}`}>
-                  {avatar}
+                <div className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors overflow-hidden ${!isSender ? 'flex-row-reverse' : ''}`}>
+                  <div className="relative flex-shrink-0">
+                    <button onClick={() => setProfileUserId(isSender ? userId : contactId)} className="cursor-pointer">
+                      {avatar}
+                    </button>
+                    {profileUserId === (isSender ? userId : contactId) && (
+                      <UserProfilePopup
+                        userId={isSender ? userId : contactId}
+                        onClose={() => setProfileUserId(null)}
+                        align={!isSender ? 'right' : 'left'}
+                      />
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className={`flex items-baseline gap-2 mb-1 ${!isSender ? 'flex-row-reverse justify-start' : ''}`}>
                       <span className="font-semibold text-white truncate">{displayName}</span>
                       <span className="text-xs text-samurai-steel flex-shrink-0 cursor-default" title={formatFullTimestamp(msg.created_at)}>{formatTime(msg.created_at)}</span>
+                      {msg.edited_at && (
+                        <span className="text-xs text-samurai-steel italic">(edited)</span>
+                      )}
                       {!isSender && msg.read_at && (
                         <span className="text-xs text-green-500/60">✓</span>
                       )}
                     </div>
-                    <div className="flex items-start gap-2">
-                      <MessageContent content={decryptDMContent(msg)} className={`text-samurai-steel-light break-words flex-1 ${!isSender ? 'text-right' : ''}`} />
-                      {isSender && (
-                        <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
-                          <button
-                            onClick={() => navigator.clipboard.writeText(decryptDMContent(msg))}
-                            className="p-1 hover:bg-samurai-grey-darker rounded"
-                            title="Copy text"
-                          >
-                            <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirmId(msg.id)}
-                            className="p-1 hover:bg-samurai-grey-darker rounded"
-                            title="Delete message"
-                          >
-                            <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
-                          </button>
+                    {isEditing ? (
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          onKeyPress={(e) => e.key === 'Enter' && handleEdit(msg.id)}
+                          className="flex-1 bg-samurai-black border border-samurai-grey-dark rounded px-2 py-1 text-white text-sm"
+                          autoFocus
+                        />
+                        <button onClick={() => handleEdit(msg.id)} className="text-samurai-red hover:text-samurai-red-dark text-xs">Save</button>
+                        <button onClick={cancelEdit} className="text-samurai-steel hover:text-white text-xs">Cancel</button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 overflow-hidden">
+                        {/* Quoted parent message */}
+                        {msg.reply_to_id && (() => {
+                          const parentMsg = messages.find(m => m.id === msg.reply_to_id)
+                          if (!parentMsg) return null
+                          const parentName = parentMsg.sender_id === userId ? (userInfo?.display_name || username || 'You') : contactName
+                          const parentContent = decryptDMContent(parentMsg)
+                          return (
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-samurai-black/40 border-l-2 border-samurai-steel/30 rounded text-xs overflow-hidden min-w-0 max-w-full">
+                              <Reply className="w-3 h-3 text-samurai-steel flex-shrink-0" />
+                              <span className="text-samurai-steel font-medium flex-shrink-0">{parentName}:</span>
+                              <span className="text-samurai-steel/70 truncate min-w-0">{parentContent}</span>
+                            </div>
+                          )
+                        })()}
+                        <div className={`flex items-start gap-2 overflow-hidden ${!isSender ? 'justify-end' : ''}`}>
+                          <MessageContent content={decryptedContent} className={`text-samurai-steel-light break-words flex-1 ${!isSender ? 'text-right' : ''}`} />
+                          {isSender && (
+                            <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
+                              <button
+                                onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Reply"
+                              >
+                                <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
+                              </button>
+                              <button
+                                onClick={() => navigator.clipboard.writeText(decryptedContent)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Copy text"
+                              >
+                                <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
+                              </button>
+                              <button
+                                onClick={() => startEdit(msg)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Edit message"
+                              >
+                                <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirmId(msg.id)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Delete message"
+                              >
+                                <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    {/* DM Attachments */}
-                    {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (
-                      <div className="space-y-2 mt-2">
-                        {messageAttachments.get(msg.id)!.map(attachment => (
-                          <AttachmentCard
-                            key={attachment.id}
-                            attachment={attachment}
-                            onDownload={downloadDMAttachment}
-                            onDelete={(id) => handleDeleteAttachment(id, msg.id)}
-                            canDelete={isSender}
-                          />
-                        ))}
+                        {/* DM Attachments */}
+                        {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (
+                          <div className="space-y-2 mt-2">
+                            {messageAttachments.get(msg.id)!.map(attachment => (
+                              <AttachmentCard
+                                key={attachment.id}
+                                attachment={attachment}
+                                onDownload={downloadDMAttachment}
+                                onDelete={(id) => handleDeleteAttachment(id, msg.id)}
+                                canDelete={isSender}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
                   {!isSender && (
                     <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
                       <button
-                        onClick={() => navigator.clipboard.writeText(decryptDMContent(msg))}
+                        onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
+                        className="p-1 hover:bg-samurai-grey-darker rounded"
+                        title="Reply"
+                      >
+                        <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
+                      </button>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(decryptedContent)}
                         className="p-1 hover:bg-samurai-grey-darker rounded"
                         title="Copy text"
                       >
@@ -496,6 +614,18 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                       </button>
                     </div>
                   )}
+                </div>
+                <div className={`flex ${!isSender ? 'justify-end pr-1 sm:pr-3' : 'justify-start pl-1 sm:pl-3'} px-2 sm:px-4 -mx-2 sm:-mx-4 -mt-1`}>
+                  <DMReactionBar
+                    dmMessageId={msg.id}
+                    userId={userId}
+                    reactions={messageReactions.get(msg.id) || []}
+                    isAuthor={isSender}
+                    onReactionChange={async () => {
+                      const reactions = await getDMMessageReactions(msg.id)
+                      setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
+                    }}
+                  />
                 </div>
                 </div>
               )
@@ -531,6 +661,19 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
       {/* Message Input */}
       <div className="p-3 sm:p-4 border-t border-samurai-grey-dark">
         <div className="glass-card rounded-xl p-2 sm:p-3">
+          {/* Reply Preview */}
+          {replyingTo && (
+            <div className="mb-2 flex items-center gap-2 px-3 py-2 bg-samurai-black/50 border-l-2 border-samurai-red rounded">
+              <Reply className="w-3 h-3 text-samurai-red flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <span className="text-xs text-samurai-red font-medium">{replyingTo.displayName}</span>
+                <p className="text-xs text-samurai-steel truncate">{replyingTo.content}</p>
+              </div>
+              <button onClick={() => setReplyingTo(null)} className="text-samurai-steel hover:text-white flex-shrink-0">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          )}
           {/* Pending Attachments */}
           {pendingAttachments.length > 0 && (
             <div className="mb-2 space-y-2">
