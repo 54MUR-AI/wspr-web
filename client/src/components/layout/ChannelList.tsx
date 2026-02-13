@@ -276,7 +276,10 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
               {channels.map((channel) => (
                 <div key={channel.id} className="group relative">
                   <button
-                    onClick={() => onChannelSelect(channel.id)}
+                    onClick={() => {
+                      setUnreadCounts(prev => { const next = new Map(prev); next.delete(channel.id); return next })
+                      onChannelSelect(channel.id)
+                    }}
                     className={`w-full flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm transition-all ${
                       selectedChannel === channel.id
                         ? 'bg-samurai-red text-white font-semibold'
