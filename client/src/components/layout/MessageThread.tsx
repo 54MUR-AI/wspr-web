@@ -13,6 +13,7 @@ import { getReactionsForMessages, subscribeToReactions, getMessageReactions } fr
 import type { Reaction } from '../../services/reaction.service'
 import ReactionBar from '../reactions/ReactionBar'
 import EmojiPicker from '../emoji/EmojiPicker'
+import UserProfilePopup from '../profile/UserProfilePopup'
 
 interface MessageThreadProps {
   channelId: string
@@ -41,6 +42,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map())
   const [messageReactions, setMessageReactions] = useState<Map<string, Reaction[]>>(new Map())
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [profileUserId, setProfileUserId] = useState<string | null>(null)
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -368,7 +370,21 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
 
               return (
                 <div key={msg.id} className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isAuthor ? 'flex-row-reverse' : ''}`}>
-                  {avatar}
+                  <div className="relative flex-shrink-0">
+                    <button onClick={() => setProfileUserId(msg.user_id)} className="cursor-pointer">
+                      {avatar}
+                    </button>
+                    {profileUserId === msg.user_id && msg.user_id && (
+                      <UserProfilePopup
+                        userId={msg.user_id}
+                        onClose={() => setProfileUserId(null)}
+                        onStartDM={(uid) => {
+                          // Navigate to DM with this user
+                          window.dispatchEvent(new CustomEvent('wspr:navigate', { detail: { channel: `dm-${uid}` } }))
+                        }}
+                      />
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className={`flex items-baseline gap-2 mb-1 ${!isAuthor ? 'justify-end' : ''}`}>
                       <span className="font-semibold text-white truncate">{displayName}</span>
