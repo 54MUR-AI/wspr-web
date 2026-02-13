@@ -70,21 +70,21 @@ export async function getDMConversations(userId: string): Promise<DMConversation
 /**
  * Get messages in a DM conversation
  */
-export async function getDMMessages(userId: string, contactId: string, limit = 50): Promise<DirectMessage[]> {
+export async function getDMMessages(userId: string, contactId: string, limit = 50, offset = 0): Promise<DirectMessage[]> {
   try {
     const { data, error } = await supabase
       .from('wspr_direct_messages')
       .select('*')
       .or(`and(sender_id.eq.${userId},recipient_id.eq.${contactId}),and(sender_id.eq.${contactId},recipient_id.eq.${userId})`)
-      .order('created_at', { ascending: true })
-      .limit(limit)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
 
     if (error) {
       console.error('Error fetching DM messages:', error)
       return []
     }
 
-    return data || []
+    return (data || []).reverse()
   } catch (error) {
     console.error('DM messages error:', error)
     return []

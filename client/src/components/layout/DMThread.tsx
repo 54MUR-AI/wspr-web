@@ -38,7 +38,10 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map())
   const [isContactOnline, setIsContactOnline] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [hasMoreMessages, setHasMoreMessages] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   // Track contact online status
   useEffect(() => {
@@ -95,8 +98,10 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
 
     const loadMessages = async () => {
       setIsLoading(true)
+      setHasMoreMessages(true)
       const dmMessages = await getDMMessages(userId, contactId, 50)
       setMessages(dmMessages)
+      setHasMoreMessages(dmMessages.length >= 50)
       setIsLoading(false)
 
       // Mark all messages from this contact as read
@@ -172,6 +177,25 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
 
     return unsubscribe
   }, [contactId, userId])
+
+  // Load older DM messages when scrolling to top
+  const loadOlderMessages = useCallback(async () => {
+    if (!contactId || !userId || !hasMoreMessages || isLoadingMore || messages.length === 0) return
+    setIsLoadingMore(true)
+    const olderMessages = await getDMMessages(userId, contactId, 50, messages.length)
+    if (olderMessages.length < 50) setHasMoreMessages(false)
+    if (olderMessages.length > 0) {
+      setMessages(prev => [...olderMessages, ...prev])
+    }
+    setIsLoadingMore(false)
+  }, [contactId, userId, hasMoreMessages, isLoadingMore, messages.length])
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget
+    if (target.scrollTop < 100 && hasMoreMessages && !isLoadingMore) {
+      loadOlderMessages()
+    }
+  }, [loadOlderMessages, hasMoreMessages, isLoadingMore])
 
   const handleTyping = useCallback(() => {
     if (!contactId || !userId) return
@@ -336,7 +360,17 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+      <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+        {isLoadingMore && (
+          <div className="text-center py-2">
+            <span className="text-xs text-samurai-steel animate-pulse">Loading older messages...</span>
+          </div>
+        )}
+        {!hasMoreMessages && messages.length > 0 && (
+          <div className="text-center py-2">
+            <span className="text-xs text-samurai-steel">Beginning of conversation</span>
+          </div>
+        )}
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
