@@ -433,7 +433,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className={`flex items-baseline gap-2 mb-1 ${!isAuthor ? 'justify-end' : ''}`}>
+                    <div className={`flex items-baseline gap-2 mb-1 ${!isAuthor ? 'flex-row-reverse justify-start' : ''}`}>
                       <span className="font-semibold text-white truncate">{displayName}</span>
                       <span className="text-xs text-samurai-steel flex-shrink-0 cursor-default" title={formatFullTimestamp(msg.created_at)}>{formatTime(msg.created_at)}</span>
                       {msg.edited_at && (
@@ -479,7 +479,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                             </div>
                           )
                         })()}
-                        <div className={`flex items-start gap-2 ${!isAuthor ? 'justify-end' : ''}`}>
+                        <div className={`flex items-start gap-2 ${!isAuthor ? 'flex-row-reverse' : ''}`}>
                           <MessageContent content={decryptedContent} className={`text-samurai-steel-light break-words ${isAuthor ? 'flex-1' : 'max-w-[85%]'}`} />
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                             <button
