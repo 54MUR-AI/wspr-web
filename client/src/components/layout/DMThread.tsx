@@ -10,6 +10,7 @@ import { supabase } from '../../lib/supabase'
 import AttachmentModal from '../attachments/AttachmentModal'
 import AttachmentCard from '../attachments/AttachmentCard'
 import EmojiPicker from '../emoji/EmojiPicker'
+import MessageContent from '../messages/MessageContent'
 
 interface DMThreadProps {
   contactId: string
@@ -438,7 +439,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                       )}
                     </div>
                     <div className={`flex items-start gap-2 ${!isSender ? 'justify-end' : ''}`}>
-                      <p className={`text-samurai-steel-light break-words ${isSender ? 'flex-1' : 'max-w-[85%]'}`}>{decryptDMContent(msg)}</p>
+                      <MessageContent content={decryptDMContent(msg)} className={`text-samurai-steel-light break-words ${isSender ? 'flex-1' : 'max-w-[85%]'}`} />
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                         <button
                           onClick={() => navigator.clipboard.writeText(decryptDMContent(msg))}

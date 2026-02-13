@@ -15,6 +15,7 @@ import ReactionBar from '../reactions/ReactionBar'
 import EmojiPicker from '../emoji/EmojiPicker'
 import UserProfilePopup from '../profile/UserProfilePopup'
 import ChannelMemberList from '../channels/ChannelMemberList'
+import MessageContent from '../messages/MessageContent'
 
 interface MessageThreadProps {
   channelId: string
@@ -469,7 +470,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                           )
                         })()}
                         <div className={`flex items-start gap-2 ${!isAuthor ? 'justify-end' : ''}`}>
-                          <p className={`text-samurai-steel-light break-words ${isAuthor ? 'flex-1' : 'max-w-[85%]'}`}>{decryptedContent}</p>
+                          <MessageContent content={decryptedContent} className={`text-samurai-steel-light break-words ${isAuthor ? 'flex-1' : 'max-w-[85%]'}`} />
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                             <button
                               onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
