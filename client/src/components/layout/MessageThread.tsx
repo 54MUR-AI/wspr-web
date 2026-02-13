@@ -1,4 +1,4 @@
-import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2, Reply, X, Copy } from 'lucide-react'
+import { Send, Paperclip, Smile, Hash, Menu, Edit2, Trash2, Reply, X, Copy, Users } from 'lucide-react'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { subscribeToTyping, sendTypingEvent } from '../../services/typing.service'
 import { socketService, Message } from '../../services/socket'
@@ -14,6 +14,7 @@ import type { Reaction } from '../../services/reaction.service'
 import ReactionBar from '../reactions/ReactionBar'
 import EmojiPicker from '../emoji/EmojiPicker'
 import UserProfilePopup from '../profile/UserProfilePopup'
+import ChannelMemberList from '../channels/ChannelMemberList'
 
 interface MessageThreadProps {
   channelId: string
@@ -44,6 +45,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [profileUserId, setProfileUserId] = useState<string | null>(null)
   const [replyingTo, setReplyingTo] = useState<{ id: string; content: string; displayName: string } | null>(null)
+  const [showMemberList, setShowMemberList] = useState(false)
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -315,9 +317,23 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
             <span className="text-samurai-red">{username}</span>
           </div>
         )}
+        
+        {/* Members Toggle */}
+        {channelId && (
+          <button
+            onClick={() => setShowMemberList(!showMemberList)}
+            className={`hidden sm:block p-2 rounded-lg transition-colors ${showMemberList ? 'bg-samurai-red text-white' : 'hover:bg-samurai-grey-darker text-samurai-steel hover:text-white'}`}
+            title="Toggle member list"
+          >
+            <Users className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
+      {/* Content Row: Messages + Member List */}
+      <div className="flex flex-1 overflow-hidden">
       {/* Messages */}
+      <div className="flex-1 flex flex-col overflow-hidden">
       <div ref={messagesContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
         {isLoadingMore && (
           <div className="text-center py-2">
@@ -601,6 +617,17 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
           </div>
         </div>
       </div>
+
+      </div>{/* end messages column */}
+
+      {/* Member List Panel */}
+      <ChannelMemberList
+        channelId={channelId}
+        isOpen={showMemberList}
+        onClose={() => setShowMemberList(false)}
+        onMemberClick={(uid) => setProfileUserId(uid)}
+      />
+      </div>{/* end content row */}
 
       {/* Attachment Modal */}
       <AttachmentModal
