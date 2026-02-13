@@ -11,6 +11,7 @@ import AttachmentModal from '../attachments/AttachmentModal'
 import AttachmentCard from '../attachments/AttachmentCard'
 import EmojiPicker from '../emoji/EmojiPicker'
 import MessageContent from '../messages/MessageContent'
+import ConfirmDialog from '../modals/ConfirmDialog'
 
 interface DMThreadProps {
   contactId: string
@@ -42,6 +43,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [showScrollBottom, setShowScrollBottom] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
@@ -302,11 +304,11 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
   }
 
   const handleDelete = async (messageId: string) => {
-    if (!confirm('Delete this message?')) return
     const success = await deleteDM(messageId, userId)
     if (success) {
       setMessages(prev => prev.filter(m => m.id !== messageId))
     }
+    setDeleteConfirmId(null)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -457,7 +459,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                         </button>
                         {isSender && (
                           <button
-                            onClick={() => handleDelete(msg.id)}
+                            onClick={() => setDeleteConfirmId(msg.id)}
                             className="p-1 hover:bg-samurai-grey-darker rounded"
                             title="Delete message"
                           >
@@ -571,6 +573,16 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={!!deleteConfirmId}
+        title="Delete Message"
+        message="Are you sure you want to delete this message? This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
 
       {/* Attachment Modal */}
       <AttachmentModal

@@ -16,6 +16,7 @@ import EmojiPicker from '../emoji/EmojiPicker'
 import UserProfilePopup from '../profile/UserProfilePopup'
 import ChannelMemberList from '../channels/ChannelMemberList'
 import MessageContent from '../messages/MessageContent'
+import ConfirmDialog from '../modals/ConfirmDialog'
 
 interface MessageThreadProps {
   channelId: string
@@ -50,6 +51,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [showScrollBottom, setShowScrollBottom] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -265,15 +267,12 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
   }
 
   const handleDelete = async (messageId: string) => {
-    if (!userId || !confirm('Delete this message?')) return
-
+    if (!userId) return
     const success = await deleteMessage(messageId, userId)
     if (success) {
-      // Remove message from UI
       setMessages(prev => prev.filter(msg => msg.id !== messageId))
-    } else {
-      alert('Failed to delete message')
     }
+    setDeleteConfirmId(null)
   }
 
   const startEdit = (msg: WsprMessage) => {
@@ -503,7 +502,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                                   <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(msg.id)}
+                                  onClick={() => setDeleteConfirmId(msg.id)}
                                   className="p-1 hover:bg-samurai-grey-darker rounded"
                                   title="Delete message"
                                 >
@@ -543,7 +542,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                   {!isAuthor && canDelete && (
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
                       <button
-                        onClick={() => handleDelete(msg.id)}
+                        onClick={() => setDeleteConfirmId(msg.id)}
                         className="p-1 hover:bg-samurai-grey-darker rounded"
                         title="Delete message (Admin/Mod)"
                       >
@@ -668,6 +667,16 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
         onMemberClick={(uid) => setProfileUserId(uid)}
       />
       </div>{/* end content row */}
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={!!deleteConfirmId}
+        title="Delete Message"
+        message="Are you sure you want to delete this message? This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => deleteConfirmId && handleDelete(deleteConfirmId)}
+        onCancel={() => setDeleteConfirmId(null)}
+      />
 
       {/* Attachment Modal */}
       <AttachmentModal
