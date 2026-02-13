@@ -417,7 +417,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                     </div>
                   )}
                 <div className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isAuthor ? 'flex-row-reverse' : ''}`}>
-                  <div className="relative flex-shrink-0 flex flex-col items-center gap-1">
+                  <div className="relative flex-shrink-0">
                     <button onClick={() => setProfileUserId(msg.user_id)} className="cursor-pointer">
                       {avatar}
                     </button>
@@ -432,16 +432,6 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                         }}
                       />
                     )}
-                    <ReactionBar
-                      messageId={msg.id}
-                      userId={userId || ''}
-                      reactions={messageReactions.get(msg.id) || []}
-                      isAuthor={isAuthor}
-                      onReactionChange={async () => {
-                        const reactions = await getMessageReactions(msg.id)
-                        setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
-                      }}
-                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className={`flex items-baseline gap-2 mb-1 ${!isAuthor ? 'flex-row-reverse justify-start' : ''}`}>
@@ -569,6 +559,18 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       )}
                     </div>
                   )}
+                </div>
+                <div className={`flex ${!isAuthor ? 'justify-end' : 'justify-start'} px-2 sm:px-4 -mx-2 sm:-mx-4`}>
+                  <ReactionBar
+                    messageId={msg.id}
+                    userId={userId || ''}
+                    reactions={messageReactions.get(msg.id) || []}
+                    isAuthor={isAuthor}
+                    onReactionChange={async () => {
+                      const reactions = await getMessageReactions(msg.id)
+                      setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
+                    }}
+                  />
                 </div>
                 </div>
               )
