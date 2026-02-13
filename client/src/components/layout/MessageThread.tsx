@@ -479,51 +479,40 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                             </div>
                           )
                         })()}
-                        <div className={`flex items-start gap-2 ${!isAuthor ? 'flex-row-reverse' : ''}`}>
+                        <div className="flex items-start gap-2">
                           <MessageContent content={decryptedContent} className={`text-samurai-steel-light break-words ${isAuthor ? 'flex-1' : 'max-w-[85%]'}`} />
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                            <button
-                              onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
-                              className="p-1 hover:bg-samurai-grey-darker rounded"
-                              title="Reply"
-                            >
-                              <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
-                            </button>
-                            <button
-                              onClick={() => navigator.clipboard.writeText(decryptedContent)}
-                              className="p-1 hover:bg-samurai-grey-darker rounded"
-                              title="Copy text"
-                            >
-                              <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
-                            </button>
-                            {isAuthor && (
-                              <>
-                                <button
-                                  onClick={() => startEdit(msg)}
-                                  className="p-1 hover:bg-samurai-grey-darker rounded"
-                                  title="Edit message"
-                                >
-                                  <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
-                                </button>
-                                <button
-                                  onClick={() => setDeleteConfirmId(msg.id)}
-                                  className="p-1 hover:bg-samurai-grey-darker rounded"
-                                  title="Delete message"
-                                >
-                                  <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
-                                </button>
-                              </>
-                            )}
-                            {!isAuthor && canDelete && (
+                          {isAuthor && (
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                              <button
+                                onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Reply"
+                              >
+                                <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
+                              </button>
+                              <button
+                                onClick={() => navigator.clipboard.writeText(decryptedContent)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Copy text"
+                              >
+                                <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
+                              </button>
+                              <button
+                                onClick={() => startEdit(msg)}
+                                className="p-1 hover:bg-samurai-grey-darker rounded"
+                                title="Edit message"
+                              >
+                                <Edit2 className="w-3 h-3 text-samurai-steel hover:text-white" />
+                              </button>
                               <button
                                 onClick={() => setDeleteConfirmId(msg.id)}
                                 className="p-1 hover:bg-samurai-grey-darker rounded"
-                                title="Delete message (Admin/Mod)"
+                                title="Delete message"
                               >
                                 <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
                               </button>
-                            )}
-                          </div>
+                            </div>
+                          )}
                         </div>
                         {/* Attachments */}
                         {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (
@@ -552,6 +541,33 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       </div>
                     )}
                   </div>
+                  {!isAuthor && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
+                      <button
+                        onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
+                        className="p-1 hover:bg-samurai-grey-darker rounded"
+                        title="Reply"
+                      >
+                        <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
+                      </button>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(decryptedContent)}
+                        className="p-1 hover:bg-samurai-grey-darker rounded"
+                        title="Copy text"
+                      >
+                        <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
+                      </button>
+                      {canDelete && (
+                        <button
+                          onClick={() => setDeleteConfirmId(msg.id)}
+                          className="p-1 hover:bg-samurai-grey-darker rounded"
+                          title="Delete message (Admin/Mod)"
+                        >
+                          <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 </div>
               )
