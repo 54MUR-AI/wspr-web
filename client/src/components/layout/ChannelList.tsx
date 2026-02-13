@@ -2,6 +2,7 @@ import { Hash, Users, Lock, Plus, ChevronDown, Search, UserPlus, Trash2, X, Mess
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { getWorkspaceChannels, deleteChannel } from '../../services/channel.service'
 import { getDMConversations } from '../../services/dm.service'
+import { getChannelUnreadCounts } from '../../services/channel-read.service'
 import type { DMConversation } from '../../services/dm.service'
 import { WsprChannel, supabase } from '../../lib/supabase'
 import { subscribeToOnlineUsers } from '../../services/online.service'
@@ -31,6 +32,7 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [showSearchResults, setShowSearchResults] = useState(false)
+  const [unreadCounts, setUnreadCounts] = useState<Map<string, number>>(new Map())
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
 
   // Debounced search
@@ -68,11 +70,19 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
     return unsubscribe
   }, [])
 
+  const loadUnreadCounts = useCallback(async () => {
+    if (userId && workspaceId) {
+      const counts = await getChannelUnreadCounts(userId, workspaceId)
+      setUnreadCounts(counts)
+    }
+  }, [userId, workspaceId])
+
   useEffect(() => {
     if (workspaceId) {
       loadChannels()
+      loadUnreadCounts()
     }
-  }, [workspaceId])
+  }, [workspaceId, loadUnreadCounts])
 
   const loadDMConversations = useCallback(async () => {
     const conversations = await getDMConversations(userId)
@@ -84,6 +94,30 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
       loadDMConversations()
     }
   }, [userId, loadDMConversations])
+
+  // Real-time subscription for channel message unread counts
+  useEffect(() => {
+    if (!userId || !workspaceId) return
+
+    const channelSub = supabase
+      .channel('channel-unread-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'wspr_messages'
+        },
+        () => {
+          loadUnreadCounts()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channelSub)
+    }
+  }, [userId, workspaceId, loadUnreadCounts])
 
   // Real-time subscription for DM list updates
   useEffect(() => {
@@ -251,6 +285,11 @@ export default function ChannelList({ selectedChannel, onChannelSelect, workspac
                   >
                     {channel.is_private ? <Lock className="w-4 h-4" /> : <Hash className="w-4 h-4" />}
                     <span className="flex-1 text-left">{channel.name}</span>
+                    {unreadCounts.get(channel.id) && selectedChannel !== channel.id ? (
+                      <span className="px-1.5 py-0.5 bg-samurai-red text-white text-xs rounded-full font-bold flex-shrink-0">
+                        {unreadCounts.get(channel.id)}
+                      </span>
+                    ) : null}
                     <Trash2 
                       className="w-3.5 h-3.5 opacity-40 hover:opacity-100 text-samurai-steel hover:text-samurai-red transition-all cursor-pointer flex-shrink-0"
                       onClick={(e) => handleDeleteChannel(channel.id, e)}

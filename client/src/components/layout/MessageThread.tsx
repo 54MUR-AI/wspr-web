@@ -17,6 +17,7 @@ import UserProfilePopup from '../profile/UserProfilePopup'
 import ChannelMemberList from '../channels/ChannelMemberList'
 import MessageContent from '../messages/MessageContent'
 import ConfirmDialog from '../modals/ConfirmDialog'
+import { markChannelRead } from '../../services/channel-read.service'
 
 interface MessageThreadProps {
   channelId: string
@@ -108,6 +109,9 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
       
       setIsLoading(false)
       
+      // Mark channel as read
+      if (userId) markChannelRead(userId, channelId)
+      
       // Scroll to bottom after loading
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     }
@@ -125,6 +129,8 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
         }
         return [...prev, newMessage]
       })
+      // Mark as read when new messages arrive while viewing
+      if (userId) markChannelRead(userId, channelId)
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     })
 
