@@ -46,6 +46,12 @@
 - ✅ Message status tracking
 - ⚠️ Group messaging (partial)
 - ✅ Message search (Supabase ilike, channels + DMs)
+- ✅ Message reply/quote (channel messages with inline quoted parent)
+- ✅ Copy message text to clipboard (channels + DMs)
+- ✅ Date separators between message groups
+- ✅ Full timestamp tooltip on hover
+- ✅ Infinite scroll pagination (channels + DMs)
+- ✅ Emoji picker for message inputs
 - ⬜ Message translation
 
 ### File & Media Handling 📁
@@ -67,6 +73,8 @@
 - ✅ Emoji reactions on channel messages
 - ✅ Browser notifications for new DMs
 - ✅ Unread count title badge
+- ✅ User profile popup on avatar click
+- ✅ Channel member list panel with online status
 - ⚠️ WebRTC integration (in progress)
 - ⚠️ Voice calls (beta)
 - ⬜ Video calls
@@ -136,6 +144,8 @@
    - ✅ Message search (implemented)
    - File version control
    - DM emoji reactions (needs schema change)
+   - DM reply/quote (needs schema migration for thread_id)
+   - Channel unread indicators (needs read-tracking schema)
 
 3. Future Considerations
    - Desktop application
@@ -148,4 +158,4 @@
 - ⚠️ = Partially implemented/in progress
 - ⬜ = Not implemented
 
-Last updated: February 12, 2026
+Last updated: February 12, 2026 (session 2)
