@@ -442,24 +442,24 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                 <div className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isSender ? 'flex-row-reverse' : ''}`}>
                   {avatar}
                   <div className="flex-1 min-w-0">
-                    <div className={`flex items-baseline gap-2 mb-1 ${!isSender ? 'justify-end' : ''}`}>
+                    <div className={`flex items-baseline gap-2 mb-1 ${!isSender ? 'flex-row-reverse justify-start' : ''}`}>
                       <span className="font-semibold text-white truncate">{displayName}</span>
                       <span className="text-xs text-samurai-steel flex-shrink-0 cursor-default" title={formatFullTimestamp(msg.created_at)}>{formatTime(msg.created_at)}</span>
                       {!isSender && msg.read_at && (
                         <span className="text-xs text-green-500/60">✓</span>
                       )}
                     </div>
-                    <div className={`flex items-start gap-2 ${!isSender ? 'justify-end' : ''}`}>
+                    <div className="flex items-start gap-2">
                       <MessageContent content={decryptDMContent(msg)} className={`text-samurai-steel-light break-words ${isSender ? 'flex-1' : 'max-w-[85%]'}`} />
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <button
-                          onClick={() => navigator.clipboard.writeText(decryptDMContent(msg))}
-                          className="p-1 hover:bg-samurai-grey-darker rounded"
-                          title="Copy text"
-                        >
-                          <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
-                        </button>
-                        {isSender && (
+                      {isSender && (
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                          <button
+                            onClick={() => navigator.clipboard.writeText(decryptDMContent(msg))}
+                            className="p-1 hover:bg-samurai-grey-darker rounded"
+                            title="Copy text"
+                          >
+                            <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
+                          </button>
                           <button
                             onClick={() => setDeleteConfirmId(msg.id)}
                             className="p-1 hover:bg-samurai-grey-darker rounded"
@@ -467,8 +467,8 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                           >
                             <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
                           </button>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                     {/* DM Attachments */}
                     {messageAttachments.get(msg.id) && messageAttachments.get(msg.id)!.length > 0 && (
@@ -485,6 +485,17 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                       </div>
                     )}
                   </div>
+                  {!isSender && (
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
+                      <button
+                        onClick={() => navigator.clipboard.writeText(decryptDMContent(msg))}
+                        className="p-1 hover:bg-samurai-grey-darker rounded"
+                        title="Copy text"
+                      >
+                        <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 </div>
               )
