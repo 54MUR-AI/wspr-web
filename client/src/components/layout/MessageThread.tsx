@@ -520,7 +520,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                           )
                         })()}
                         <div className={`flex items-start gap-2 ${!isAuthor ? 'justify-end' : ''}`}>
-                          <MessageContent content={decryptedContent} className="text-samurai-steel-light break-words flex-1" />
+                          <MessageContent content={decryptedContent} className={`text-samurai-steel-light break-words flex-1 ${!isAuthor ? 'text-right' : ''}`} />
                           {isAuthor && (
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                               <button

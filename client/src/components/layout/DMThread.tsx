@@ -450,7 +450,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                       )}
                     </div>
                     <div className="flex items-start gap-2">
-                      <MessageContent content={decryptDMContent(msg)} className={`text-samurai-steel-light break-words ${isSender ? 'flex-1' : 'max-w-[85%]'}`} />
+                      <MessageContent content={decryptDMContent(msg)} className={`text-samurai-steel-light break-words flex-1 ${!isSender ? 'text-right' : ''}`} />
                       {isSender && (
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                           <button
