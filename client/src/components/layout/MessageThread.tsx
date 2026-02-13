@@ -465,7 +465,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                         </button>
                       </div>
                     ) : (
-                      <div className="space-y-2">
+                      <div className="space-y-2 overflow-hidden">
                         {/* Quoted parent message */}
                         {msg.thread_id && (() => {
                           const parentMsg = messages.find(m => m.id === msg.thread_id)
@@ -473,14 +473,14 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                           const parentName = (parentMsg as any).user?.display_name || 'Unknown'
                           const parentContent = userId ? decryptMessageContent(parentMsg, userId) : parentMsg.content
                           return (
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-samurai-black/40 border-l-2 border-samurai-steel/30 rounded text-xs">
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-samurai-black/40 border-l-2 border-samurai-steel/30 rounded text-xs overflow-hidden min-w-0 max-w-full">
                               <Reply className="w-3 h-3 text-samurai-steel flex-shrink-0" />
-                              <span className="text-samurai-steel font-medium">{parentName}:</span>
-                              <span className="text-samurai-steel/70 truncate">{parentContent}</span>
+                              <span className="text-samurai-steel font-medium flex-shrink-0">{parentName}:</span>
+                              <span className="text-samurai-steel/70 truncate min-w-0">{parentContent}</span>
                             </div>
                           )
                         })()}
-                        <div className={`flex items-start gap-2 ${!isAuthor ? 'justify-end' : ''}`}>
+                        <div className={`flex items-start gap-2 overflow-hidden ${!isAuthor ? 'justify-end' : ''}`}>
                           <MessageContent content={decryptedContent} className={`text-samurai-steel-light break-words flex-1 ${!isAuthor ? 'text-right' : ''}`} />
                           {isAuthor && (
                             <div className="flex gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
