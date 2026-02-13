@@ -311,10 +311,12 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
     setDeleteConfirmId(null)
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
+    } else if (e.key === 'Escape') {
+      if (showEmojiPicker) setShowEmojiPicker(false)
     }
   }
 
@@ -545,7 +547,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
               type="text"
               value={message}
               onChange={(e) => { setMessage(e.target.value); if (e.target.value.trim()) handleTyping() }}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder={`Message ${contactName}`}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder-samurai-steel text-sm sm:text-base px-2"
             />

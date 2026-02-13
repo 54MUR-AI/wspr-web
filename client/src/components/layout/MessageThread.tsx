@@ -285,10 +285,14 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
     setEditingContent('')
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
+    } else if (e.key === 'Escape') {
+      if (editingMessageId) cancelEdit()
+      else if (replyingTo) setReplyingTo(null)
+      else if (showEmojiPicker) setShowEmojiPicker(false)
     }
   }
 
@@ -626,7 +630,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
               type="text"
               value={message}
               onChange={(e) => { setMessage(e.target.value); if (e.target.value.trim()) handleTyping() }}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               placeholder={`Message ${channelName ? '#' + channelName : ''}`}
               disabled={!channelId}
               className="flex-1 bg-transparent border-none outline-none text-white placeholder-samurai-steel text-sm sm:text-base px-2 disabled:opacity-50"
