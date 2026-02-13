@@ -432,18 +432,16 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                         }}
                       />
                     )}
-                    {!isAuthor && (
-                      <ReactionBar
-                        messageId={msg.id}
-                        userId={userId || ''}
-                        reactions={messageReactions.get(msg.id) || []}
-                        isAuthor={false}
-                        onReactionChange={async () => {
-                          const reactions = await getMessageReactions(msg.id)
-                          setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
-                        }}
-                      />
-                    )}
+                    <ReactionBar
+                      messageId={msg.id}
+                      userId={userId || ''}
+                      reactions={messageReactions.get(msg.id) || []}
+                      isAuthor={isAuthor}
+                      onReactionChange={async () => {
+                        const reactions = await getMessageReactions(msg.id)
+                        setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
+                      }}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className={`flex items-baseline gap-2 mb-1 ${!isAuthor ? 'flex-row-reverse justify-start' : ''}`}>
@@ -540,19 +538,6 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                               />
                             ))}
                           </div>
-                        )}
-                        {/* Reactions (author messages only - non-author reactions are outside bubble) */}
-                        {isAuthor && (
-                          <ReactionBar
-                            messageId={msg.id}
-                            userId={userId || ''}
-                            reactions={messageReactions.get(msg.id) || []}
-                            isAuthor={true}
-                            onReactionChange={async () => {
-                              const reactions = await getMessageReactions(msg.id)
-                              setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
-                            }}
-                          />
                         )}
                       </div>
                     )}
