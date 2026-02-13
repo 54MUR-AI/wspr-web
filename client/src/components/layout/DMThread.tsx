@@ -313,6 +313,11 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   }
 
+  const formatFullTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return date.toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' })
+  }
+
   const contactName = contactInfo?.display_name || 'Loading...'
   const contactAvatar = contactInfo?.avatar_url
   const contactColor = contactInfo?.avatar_color || '#E63946'
@@ -427,7 +432,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                   <div className="flex-1 min-w-0">
                     <div className={`flex items-baseline gap-2 mb-1 ${!isSender ? 'justify-end' : ''}`}>
                       <span className="font-semibold text-white truncate">{displayName}</span>
-                      <span className="text-xs text-samurai-steel flex-shrink-0">{formatTime(msg.created_at)}</span>
+                      <span className="text-xs text-samurai-steel flex-shrink-0 cursor-default" title={formatFullTimestamp(msg.created_at)}>{formatTime(msg.created_at)}</span>
                       {!isSender && msg.read_at && (
                         <span className="text-xs text-green-500/60">✓</span>
                       )}

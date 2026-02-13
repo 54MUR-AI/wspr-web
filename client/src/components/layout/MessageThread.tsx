@@ -290,6 +290,11 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   }
 
+  const formatFullTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return date.toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' })
+  }
+
   return (
     <div className="flex-1 flex flex-col bg-samurai-black">
       {/* Channel Header */}
@@ -419,7 +424,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                   <div className="flex-1 min-w-0">
                     <div className={`flex items-baseline gap-2 mb-1 ${!isAuthor ? 'justify-end' : ''}`}>
                       <span className="font-semibold text-white truncate">{displayName}</span>
-                      <span className="text-xs text-samurai-steel flex-shrink-0">{formatTime(msg.created_at)}</span>
+                      <span className="text-xs text-samurai-steel flex-shrink-0 cursor-default" title={formatFullTimestamp(msg.created_at)}>{formatTime(msg.created_at)}</span>
                       {msg.edited_at && (
                         <span className="text-xs text-samurai-steel italic">(edited)</span>
                       )}
