@@ -464,7 +464,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                         </button>
                       </div>
                     ) : (
-                      <div className="space-y-2">
+                      <div className={`space-y-2 ${!isAuthor ? 'items-end flex flex-col' : ''}`}>
                         {/* Quoted parent message */}
                         {msg.thread_id && (() => {
                           const parentMsg = messages.find(m => m.id === msg.thread_id)
@@ -528,45 +528,59 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                             ))}
                           </div>
                         )}
-                        {/* Reactions */}
-                        <ReactionBar
-                          messageId={msg.id}
-                          userId={userId || ''}
-                          reactions={messageReactions.get(msg.id) || []}
-                          isAuthor={isAuthor}
-                          onReactionChange={async () => {
-                            const reactions = await getMessageReactions(msg.id)
-                            setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
-                          }}
-                        />
+                        {/* Reactions (author messages only - non-author reactions are outside bubble) */}
+                        {isAuthor && (
+                          <ReactionBar
+                            messageId={msg.id}
+                            userId={userId || ''}
+                            reactions={messageReactions.get(msg.id) || []}
+                            isAuthor={true}
+                            onReactionChange={async () => {
+                              const reactions = await getMessageReactions(msg.id)
+                              setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
+                            }}
+                          />
+                        )}
                       </div>
                     )}
                   </div>
                   {!isAuthor && (
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 self-center">
-                      <button
-                        onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
-                        className="p-1 hover:bg-samurai-grey-darker rounded"
-                        title="Reply"
-                      >
-                        <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
-                      </button>
-                      <button
-                        onClick={() => navigator.clipboard.writeText(decryptedContent)}
-                        className="p-1 hover:bg-samurai-grey-darker rounded"
-                        title="Copy text"
-                      >
-                        <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
-                      </button>
-                      {canDelete && (
+                    <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                      <ReactionBar
+                        messageId={msg.id}
+                        userId={userId || ''}
+                        reactions={messageReactions.get(msg.id) || []}
+                        isAuthor={false}
+                        onReactionChange={async () => {
+                          const reactions = await getMessageReactions(msg.id)
+                          setMessageReactions(prev => new Map(prev).set(msg.id, reactions))
+                        }}
+                      />
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => setDeleteConfirmId(msg.id)}
+                          onClick={() => setReplyingTo({ id: msg.id, content: decryptedContent, displayName })}
                           className="p-1 hover:bg-samurai-grey-darker rounded"
-                          title="Delete message (Admin/Mod)"
+                          title="Reply"
                         >
-                          <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                          <Reply className="w-3 h-3 text-samurai-steel hover:text-white" />
                         </button>
-                      )}
+                        <button
+                          onClick={() => navigator.clipboard.writeText(decryptedContent)}
+                          className="p-1 hover:bg-samurai-grey-darker rounded"
+                          title="Copy text"
+                        >
+                          <Copy className="w-3 h-3 text-samurai-steel hover:text-white" />
+                        </button>
+                        {canDelete && (
+                          <button
+                            onClick={() => setDeleteConfirmId(msg.id)}
+                            className="p-1 hover:bg-samurai-grey-darker rounded"
+                            title="Delete message (Admin/Mod)"
+                          >
+                            <Trash2 className="w-3 h-3 text-samurai-steel hover:text-samurai-red" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
