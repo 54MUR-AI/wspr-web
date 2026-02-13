@@ -361,12 +361,17 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
           </div>
         ) : (
           <>
-            {messages.map((msg) => {
+            {messages.map((msg, index) => {
               const displayName = (msg as any).user?.display_name || 'Unknown'
               const decryptedContent = userId ? decryptMessageContent(msg, userId) : msg.content
               const isAuthor = msg.user_id === userId
               const isEditing = editingMessageId === msg.id
               const canDelete = isAuthor || (isAdminOrMod && isPublicWorkspace)
+
+              // Date separator
+              const msgDate = new Date(msg.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+              const prevDate = index > 0 ? new Date(messages[index - 1].created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : null
+              const showDateSeparator = index === 0 || msgDate !== prevDate
               
               const avatarUrl = (msg as any).user?.avatar_url
               const avatarColor = (msg as any).user?.avatar_color || '#E63946'
@@ -387,7 +392,15 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
               )
 
               return (
-                <div key={msg.id} className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isAuthor ? 'flex-row-reverse' : ''}`}>
+                <div key={msg.id}>
+                  {showDateSeparator && (
+                    <div className="flex items-center gap-3 my-4">
+                      <div className="flex-1 h-px bg-samurai-grey-dark" />
+                      <span className="text-xs text-samurai-steel font-medium px-2">{msgDate}</span>
+                      <div className="flex-1 h-px bg-samurai-grey-dark" />
+                    </div>
+                  )}
+                <div className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isAuthor ? 'flex-row-reverse' : ''}`}>
                   <div className="relative flex-shrink-0">
                     <button onClick={() => setProfileUserId(msg.user_id)} className="cursor-pointer">
                       {avatar}
@@ -525,6 +538,7 @@ export default function MessageThread({ channelId, userEmail, userId, username, 
                       </button>
                     </div>
                   )}
+                </div>
                 </div>
               )
             })}

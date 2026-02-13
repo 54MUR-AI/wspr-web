@@ -387,11 +387,16 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
           </div>
         ) : (
           <>
-            {messages.map((msg) => {
+            {messages.map((msg, index) => {
               const isSender = msg.sender_id === userId
               const displayName = isSender ? (userInfo?.display_name || username || 'You') : contactName
               const avatarUrl = isSender ? (userInfo?.avatar_url || null) : contactAvatar
               const avatarColor = isSender ? (userInfo?.avatar_color || '#E63946') : contactColor
+
+              // Date separator
+              const msgDate = new Date(msg.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+              const prevDate = index > 0 ? new Date(messages[index - 1].created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : null
+              const showDateSeparator = index === 0 || msgDate !== prevDate
 
               const avatar = avatarUrl ? (
                 <img
@@ -409,7 +414,15 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
               )
 
               return (
-                <div key={msg.id} className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isSender ? 'flex-row-reverse' : ''}`}>
+                <div key={msg.id}>
+                  {showDateSeparator && (
+                    <div className="flex items-center gap-3 my-4">
+                      <div className="flex-1 h-px bg-samurai-grey-dark" />
+                      <span className="text-xs text-samurai-steel font-medium px-2">{msgDate}</span>
+                      <div className="flex-1 h-px bg-samurai-grey-dark" />
+                    </div>
+                  )}
+                <div className={`flex gap-3 group hover:bg-samurai-black-light px-2 sm:px-4 py-2 -mx-2 sm:-mx-4 rounded-lg transition-colors ${!isSender ? 'flex-row-reverse' : ''}`}>
                   {avatar}
                   <div className="flex-1 min-w-0">
                     <div className={`flex items-baseline gap-2 mb-1 ${!isSender ? 'justify-end' : ''}`}>
@@ -455,6 +468,7 @@ export default function DMThread({ contactId, userId, username, isConnected, onM
                       </div>
                     )}
                   </div>
+                </div>
                 </div>
               )
             })}
