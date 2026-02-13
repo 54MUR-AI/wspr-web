@@ -45,6 +45,15 @@ export function startNotifications(userId: string): () => void {
   currentUserId = userId
   requestPermission()
 
+  const refreshUnreadCount = async () => {
+    const { count } = await supabase
+      .from('wspr_direct_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_id', userId)
+      .is('read_at', null)
+    updateTitleBadge(count || 0)
+  }
+
   const subscription = supabase
     .channel('dm-notifications')
     .on(
@@ -67,15 +76,20 @@ export function startNotifications(userId: string): () => void {
 
         const senderName = profile?.display_name || 'Someone'
         showNotification(senderName, msg.content)
-
-        // Update title badge with total unread count
-        const { count } = await supabase
-          .from('wspr_direct_messages')
-          .select('id', { count: 'exact', head: true })
-          .eq('recipient_id', userId)
-          .is('read_at', null)
-
-        updateTitleBadge(count || 0)
+        refreshUnreadCount()
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'wspr_direct_messages',
+        filter: `recipient_id=eq.${userId}`
+      },
+      () => {
+        // Refresh when messages are marked as read
+        refreshUnreadCount()
       }
     )
     .subscribe()
